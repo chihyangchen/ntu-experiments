@@ -36,32 +36,32 @@ fi
 for i in $@ ;do
     case "$i" in
     wwan0)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_ed1c8b2e-if03-port0"
+        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_ed1c8b2e-if03-port0"
         ;;
     quectel0)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_76857c8-if03-port0"
+        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_76857c8-if03-port0"
         ;;
     quectel1)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_bc4587d-if03-port0"
+        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_bc4587d-if03-port0"
         ;;
     quectel2)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if03-port0"
+        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if03-port0"
         ;;
     quectel3)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
+        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
         ;;
     esac
 done
 
 if [ -z "$path" ]
 then
-    echo $wdm > $interface
-    echo $DEV_AT_PATH >> $interface
+    echo "/dev/$wdm" > $interface
+    echo "/dev/$DEV_AT_PATH" >> $interface
 else
     if [ ! -d $path ]
     then
         mkdir $path
     fi
-    echo $wdm > "$path/$interface"
-    echo $DEV_AT_PATH >> "$path/$interface"
+    echo "/dev/$wdm" > "$path/$interface"
+    echo "/dev/$DEV_AT_PATH" >> "$path/$interface"
 fi

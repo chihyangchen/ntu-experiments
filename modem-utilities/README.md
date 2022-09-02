@@ -1,4 +1,11 @@
 # HOW TO USE (Quectel RM500Q only)   
+
+## modem-info.sh  
+### Description:  
+    Acquire the serving/neighbour cell info from target at command port   
+    Loop if add delay -t argument   
+### Command:  
+    [bash] ./modem-info.sh -d [/dev/ttyUABX] {-t [delay]}   
   
 ## band-setting.sh   
 ### Description:  
@@ -27,9 +34,9 @@
 
 ## dial-qmi.sh   
 ### Description:  
-    Dial the target qmi interface with target APN   
+    Dial the target qmi dev and network interface with target APN   
 ### Command:   
-    [bash] ./dial-qmi.sh -i [interface] -s [APN] {-P [PATH]}
+    [bash] ./dial-qmi.sh -d [/dev/cdcwdmX] -i [interface] -s [APN] {-P [PATH]}
    
 ## disconnect--qmi.sh   
 ### Description:   

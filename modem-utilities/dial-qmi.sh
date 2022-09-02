@@ -3,15 +3,17 @@
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -i [interface] -s [APN] {-P [PATH]}"
+    echo "Usage: $0 -d [/dev/cdc-wdmX] -i [interface] -s [APN] {-P [PATH]}"
     echo "interface: interface name eg. wwan0"
     echo "PATH: path to save the temp file"
+    echo "/dev/cdc-wdmX: X is the num of device"
     exit 1 # Exit script after printing help
 }
 
-while getopts "i:s:P:" opt
+while getopts "d:i:s:P:" opt
 do
     case "$opt" in
+        d ) dev="$OPTARG" ;;
         i ) interface="$OPTARG" ;;
         s ) apn="$OPTARG" ;;
         P ) path="$OPTARG" ;;
@@ -19,7 +21,7 @@ do
     esac
 done
 
-if [ -z "$interface" ] || [ -z "$apn" ]
+if [ -z "$interface" ] || [ -z "$apn" ] || [ -z "$dev" ]
 then
     echo "missing argument"
     helpFunction
@@ -38,7 +40,7 @@ fi
 wds_path="$path/temp-wds_$interface"
 wds_ip_path="$path/temp-ip_$interface"
 wds_ip_filter="$path/temp-ip-setting_$interface"
-wdm="/dev/cdc-wdm0"
+wdm="$dev"
 mux="1"
 :> $wds_path
 :> $wds_ip_path
