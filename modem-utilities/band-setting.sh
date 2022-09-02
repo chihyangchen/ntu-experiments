@@ -2,18 +2,18 @@
 
 #Author: Chih-Yang Chen
 #function: use the mxat utility to set the band suport of target modem
-#input:  -p [AT PORT] -l [LTE BAND] -e [ENDC NR BAND] 
+#input:  -d [AT PORT] -l [LTE BAND] -e [ENDC NR BAND] 
 #output: NA
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -p [ttyUSB PORT] -l [LTE band combination] -e [ENDC NR Band combination]"
+    echo "Usage: $0 -d [/dev/ttyUSBX] -l [LTE band combination] -e [ENDC NR Band combination]"
     exit 1 # Exit script after printing help
 }
-while getopts "p:l:e:" opt
+while getopts "d:l:e:" opt
 do
     case "$opt" in
-        p ) PORT="$OPTARG" ;;
+        d ) PORT="$OPTARG" ;;
         l ) LTE="$OPTARG" ;;
         e ) ENDC="$OPTARG" ;;
         ? ) helpFunction ;;
@@ -44,5 +44,5 @@ then
 fi
 
 
-echo $PORT
-echo $lte
+#echo $PORT
+#echo $lte

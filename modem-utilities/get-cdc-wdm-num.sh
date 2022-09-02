@@ -36,7 +36,7 @@ fi
 for i in $@ ;do
     case "$i" in
     wwan0)
-        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_ed1c8b2e-if03-port0"
+        DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if03-port0"
         ;;
     quectel0)
         DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_76857c8-if03-port0"

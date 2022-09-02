@@ -31,6 +31,7 @@
     Process the RM500Q modeules with network interface are quectel0 to quectel3.   
 ### Command:   
     python3 ./get-all-modem.py {-P [PATH]}   
+    python3 ./get-all-modem.py -h for help     
 
 ## dial-qmi.sh   
 ### Description:  
@@ -38,8 +39,8 @@
 ### Command:   
     [bash] ./dial-qmi.sh -d [/dev/cdcwdmX] -i [interface] -s [APN] {-P [PATH]}
    
-## disconnect--qmi.sh   
+## disconnect-qmi.sh   
 ### Description:   
     Use with dial-qmi.sh   
 ### Command:  
-    [bash] ./disconnect-5g-qmi.sh -i [interface] {-P [PATH]}
+    [bash] ./disconnect-qmi.sh -i [interface] {-P [PATH]}
