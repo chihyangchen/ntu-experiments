@@ -7,15 +7,15 @@
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -i [interface] {-P [PATH]}"
+    echo "Usage: $0 -i [interface] "
     exit 1 # Exit script after printing help
 }
 
-while getopts "i:P:" opt
+while getopts "i:" opt
 do
     case "$opt" in
         i ) interface="$OPTARG" ;;
-        P ) path="$OPTARG" ;;
+#        P ) path="$OPTARG" ;;
         ? ) helpFunction ;;
     esac
 done
@@ -26,6 +26,7 @@ then
     helpFunction
 fi
 
+path="./temp"
 wdm=`ls /sys/class/net/$interface/device/usbmisc/`
 if [ -z "$wdm" ]
 then
@@ -53,15 +54,16 @@ for i in $@ ;do
     esac
 done
 
-if [ -z "$path" ]
-then
-    echo "/dev/$wdm" > $interface
-    echo "/dev/$DEV_AT_PATH" >> $interface
-else
+#if [ -z "$path" ]
+#then
+#    echo "/dev/$wdm" > $interface
+#    echo "/dev/$DEV_AT_PATH" >> $interface
+#else
+# Fixed the save path
     if [ ! -d $path ]
     then
         mkdir $path
     fi
     echo "/dev/$wdm" > "$path/$interface"
     echo "/dev/$DEV_AT_PATH" >> "$path/$interface"
-fi
+#fi
