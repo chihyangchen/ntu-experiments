@@ -7,7 +7,8 @@
 ## modem-info.sh  
 ### Description:  
     Acquire the serving/neighbour cell info from target at command port   
-    Loop if add delay -t argument and will auto record  
+    Loop if add delay -t argument and will auto record 
+    delete the looping file in the current directory to stop if running in background.   
 ### Command:  
     [bash] ./modem-info.sh -i [interface] {-t [delay sec]}   
   

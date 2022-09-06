@@ -74,7 +74,8 @@ else
             mkdir "$path/$interface"
     fi
     
-    while true 
+    touch ./looping
+    while [ -f ./looping ] 
     do
         capture >> "$path/$interface/$filename"
         sleep $delay
