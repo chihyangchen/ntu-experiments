@@ -1,11 +1,15 @@
 # HOW TO USE (Quectel RM500Q only)   
+## Step  
+1. use get-all-modem.py to get the current modems device node
+2. dial-qmi with the specific network interface
+
 
 ## modem-info.sh  
 ### Description:  
     Acquire the serving/neighbour cell info from target at command port   
-    Loop if add delay -t argument   
+    Loop if add delay -t argument and will auto record  
 ### Command:  
-    [bash] ./modem-info.sh -d [/dev/ttyUABX] {-t [delay]}   
+    [bash] ./modem-info.sh -i [interface] {-t [delay sec]}   
   
 ## band-setting.sh   
 ### Description:  

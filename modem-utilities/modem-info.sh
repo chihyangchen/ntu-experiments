@@ -10,7 +10,7 @@
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -i [interface] {-t [delay]}"
+    echo "Usage: $0 -i [interface] {-t [delay sec]}"
     echo "interface: network interface"
     echo "sleep time: wait time of each information capture"
     exit 1 # Exit script after printing help
@@ -30,6 +30,7 @@ then
     echo "missing argument"
     helpFunction
 fi
+
 
 for i in $@ ;do
     case "$i" in
@@ -53,19 +54,30 @@ done
 
 capture()
 {
-    #FIXME: add the current timestamp
+    date +%Y-%m-%d_%H-%M-%S
     mxat -d $DEV_AT_PATH -c at+qeng=\"servingcell\" -t 3000
     mxat -d $DEV_AT_PATH -c at+qeng=\"neighbourcell\" -t 3000
        
 }
-
+filename=$interface"_`(date +%Y-%m-%d_%H-%M-%S)`"
 if [ -z $delay ]
 then
     capture
 else
+    path="at_log_quectel_`(date +%Y-%m-%d)`"
+    if [ ! -d $path ]
+        then
+            mkdir $path
+    fi
+    if [ ! -d "$path/$interface" ]
+        then
+            mkdir "$path/$interface"
+    fi
+    
     while true 
     do
-        capture
-        sleep $delay 
+        capture >> "$path/$interface/$filename"
+        sleep $delay
+#        tail -10 "$path/$interface/$filename"
     done
 fi
