@@ -54,7 +54,7 @@ done
 
 capture()
 {
-    date +%Y-%m-%d_%H-%M-%S
+    echo "time,`(date +%Y-%m-%d_%H-%M-%S)`"
     mxat -d $DEV_AT_PATH -c at+qeng=\"servingcell\" -t 3000
     mxat -d $DEV_AT_PATH -c at+qeng=\"neighbourcell\" -t 3000
        
