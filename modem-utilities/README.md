@@ -1,8 +1,10 @@
 # HOW TO USE (Quectel RM500Q only)   
 ## Step  
-1. use get-all-modem.py to get the current modems device node
+1. use get-all-modem.py to get the current modems device node 
 2. dial-qmi with the specific network interface
-
+***
+note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rules.d/ to rename the device interface
+***
 
 ## modem-info.sh  
 ### Description:  
@@ -14,7 +16,8 @@
   
 ## band-setting.sh   
 ### Description:  
-    This script can configure the LTE/NSA_NR band combo via the corresponding AT PORT   
+    This script can configure the LTE/NSA_NR band combo via the corresponding AT PORT  
+    Refer the RM500Q documents to see the specific band support. 
 ### Command:   
     [bash] ./band-setting.sh -i [interface] -l [LTE band combination] -e [ENDC NR Band combination]  
 
@@ -33,10 +36,7 @@
 ## get-all-modem.py  
 ### Description:  
     This python script is to get the all quectel RM500Q devices.   
-    Process the RM500Q modeules with network interface are quectel0 to quectel3.   
-### Command:   
-    python3 ./get-all-modem.py    
-    python3 ./get-all-modem.py -h for help     
+    Process the RM500Q modeules with network interface are qc00 to qc03.   
 
 ## dial-qmi.sh   
 ### Description:  
