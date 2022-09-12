@@ -10,7 +10,7 @@
 """
 import os
 
-modem_interface = ["wwan0","wwan1","qc00","qc01", "qc02", "qc3"]
+modem_interface = ["wwan0","wwan1","qc00","qc01", "qc02", "qc03"]
 
 for i in range(len(modem_interface)):
     os.system("./get-cdc-wdm-num.sh -i "+ modem_interface[i])

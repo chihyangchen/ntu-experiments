@@ -42,16 +42,16 @@ for i in $@ ;do
     wwan1)
         DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_ed1c8b2e-if03-port0"
         ;;
-    quectel0)
+    qc00)
         DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_76857c8-if03-port0"
         ;;
-    quectel1)
+    qc01)
         DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_bc4587d-if03-port0"
         ;;
-    quectel2)
+    qc02)
         DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if03-port0"
         ;;
-    quectel3)
+    qc03)
         DEV_AT_PATH="serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
         ;;
     esac

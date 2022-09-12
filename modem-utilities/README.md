@@ -37,10 +37,12 @@ note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rul
 ### Description:  
     This python script is to get the all quectel RM500Q devices.   
     Process the RM500Q modeules with network interface are qc00 to qc03.   
+### Command:   
+    [python3] ./get-all-modem.py  
 
 ## dial-qmi.sh   
 ### Description:  
-    Dial the target qmi dev and network interface with target APN of internet.  
+    Dial the target qmi dev and network interface with target APN of "internet".  
 ### Command:   
     [bash] ./dial-qmi.sh -i [interface]  
    
