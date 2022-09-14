@@ -4,8 +4,9 @@
 # Description: 
 #       acquire the serving/neighbour cell info from target at command port 
 #       loop if add delay -t argument
-# input: -d /dev/ttyUSBX -t delay time
+# input: -i interface -t delay time
 # output: at command information
+source ./quectel-path.sh
 
 helpFunction()
 {
@@ -31,26 +32,7 @@ then
     helpFunction
 fi
 
-
-for i in $@ ;do
-    case "$i" in
-    wwan0)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if03-port0"
-        ;;
-    qc00)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_76857c8-if03-port0"
-        ;;
-    qc01)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_bc4587d-if03-port0"
-        ;;
-    qe02)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if03-port0"
-        ;;
-    qc03)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
-        ;;
-    esac
-done
+GET_AT_PATH $interface
 
 capture()
 {
@@ -82,3 +64,4 @@ else
 #        tail -10 "$path/$interface/$filename"
     done
 fi
+

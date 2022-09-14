@@ -21,13 +21,18 @@ note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rul
 ### Command:   
     [bash] ./band-setting.sh -i [interface] -l [LTE band combination] -e [ENDC NR Band combination]  
 
-## get-cdc-wdm-num.sh  
+## qc-at.sh  
+### Description:  
+    at command of the specific module   
+### Command:   
+    [bash] qc-at -i [interface] -c [at command]   
 
+## get-cdc-wdm-num.sh  
 ***
     Note: Propretary for target modules with unique USB serial ID.
 ***
 ### Description:  
-    This script can automatic get the target cdc-wdmX dev and target AT command port.  
+    This script can automatic get the target cdc-wdmX dev and target DM port.  
     Save the results into temp directory.   
     Filename will be the network interface.   
 ### Command:   
@@ -50,4 +55,7 @@ note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rul
 ### Description:   
     Use with dial-qmi.sh   
 ### Command:  
-    [bash] ./disconnect-qmi.sh -i [interface] 
+    [bash] ./disconnect-qmi.sh -i [interface]  
+## quectel-path.sh   
+### Description:   
+    func of get specific AT/DM path
