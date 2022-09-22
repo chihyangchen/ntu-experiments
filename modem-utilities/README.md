@@ -5,7 +5,10 @@
 ***
 note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rules.d/ to rename the device interface
 ***
-
+modem-info to capture the current serving and neighbor cell information.   
+band-setting to enable the specific band setting.   
+qc-at to send the at command to specific quectel module.  
+     
 ## modem-info.sh  
 ### Description:  
     Acquire the serving/neighbour cell info from target at command port   
@@ -18,6 +21,7 @@ note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rul
 ### Description:  
     This script can configure the LTE/NSA_NR band combo via the corresponding AT PORT  
     Refer the RM500Q documents to see the specific band support. 
+    query the current setting: use the -i [interface]  argu. only.   
 ### Command:   
     [bash] ./band-setting.sh -i [interface] -l [LTE band combination] -e [ENDC NR Band combination]  
 

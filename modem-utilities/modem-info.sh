@@ -33,13 +33,14 @@ then
 fi
 
 GET_AT_PATH $interface
+wdm=`(head -1 ./temp/$interface)`
 
 capture()
 {
     echo "time,`(date +%Y-%m-%d_%H-%M-%S)`"
     mxat -d $DEV_AT_PATH -c at+qeng=\"servingcell\" -t 3000
     mxat -d $DEV_AT_PATH -c at+qeng=\"neighbourcell\" -t 3000
-       
+    qmicli -p -d $wdm --nas-get-cell-location-info
 }
 filename=$interface"_`(date +%Y-%m-%d_%H-%M-%S)`"
 if [ -z $delay ]
