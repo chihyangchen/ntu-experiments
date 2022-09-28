@@ -24,6 +24,10 @@ qc-at to send the at command to specific quectel module.
     query the current setting: use the -i [interface]  argu. only.   
 ### Command:   
     [bash] ./band-setting.sh -i [interface] -l [LTE band combination] -e [ENDC NR Band combination]  
+    e.g. sudo ./band-setting.sh -i [interface] to query the current setting  
+    e.g. sudo ./band-setting.sh -i [interface] -l 1:2:3:4  set the LTE band  
+    e.g. sudo ./band-setting.sh -i [interface] -e 77:78:79 set the ENDC NR band   
+    e.g. sudo  ./band-setting.sh -i [interface] -l 1:2:3:4  -e 77:78:79 set both LTE and ENDC NR band
 
 ## qc-at.sh  
 ### Description:  

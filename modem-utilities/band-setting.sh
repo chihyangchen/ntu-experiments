@@ -5,10 +5,12 @@
 #           will auto select the target interface dev    
 #input:  -i [interface] -l [LTE BAND] -e [ENDC NR BAND] 
 #output: NA
+source ./quectel-path.sh
 helpFunction()
 {
     echo ""
     echo "Usage: $0 -i [interface] -l [LTE band combination] -e [ENDC NR Band combination]"
+    echo "e.g. sudo ./band-setting.sh -i [interface] -l 1:2:3:4  -e 77:78:79"
     exit 1 # Exit script after printing help
 }
 while getopts "i:l:e:" opt
@@ -27,25 +29,7 @@ then
     helpFunction
 fi
 
-for i in $@ ;do
-    case "$i" in
-    wwan0)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if03-port0"
-        ;;
-    quectel0)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_76857c8-if03-port0"
-        ;;
-    quectel1)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_bc4587d-if03-port0"
-        ;;
-    quectel2)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if03-port0"
-        ;;
-    quectel3)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
-        ;;
-    esac
-done
+GET_AT_PATH $interface
 
 if [ -z "$LTE"] && [ -z "$ENDC" ]
 then
