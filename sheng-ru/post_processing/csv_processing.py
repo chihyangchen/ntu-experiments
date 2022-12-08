@@ -20,7 +20,7 @@ for filename in filenames:
 
 for csv_file in csv_files:
     print(csv_file)
-    print(">>>>>")
+    print("csv process >>>>>")
 
     f = open(csv_file, 'r')
     lines = f.readlines()

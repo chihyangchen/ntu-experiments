@@ -18,9 +18,9 @@ for fname in filenames:
         continue
         
     print(fname)
-    f = open(sys.argv[1] + fname, encoding="utf-8")
-    f2 = open(sys.argv[1] + fname+'_ml1.csv', 'w')
-    print(">>>>>")
+    f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
+    f2 = open(os.path.join(sys.argv[1], fname+'_ml1.csv') , 'w')
+    print("ml1 >>>>>")
     #Writing the column names...
     #-------------------------------------------------
     f2.write(",".join(["time", "type_id",

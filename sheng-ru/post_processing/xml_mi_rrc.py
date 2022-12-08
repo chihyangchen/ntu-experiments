@@ -143,9 +143,9 @@ for fname in filenames:
         continue
         
     print(fname)
-    f = open(sys.argv[1] + fname, encoding="utf-8")
-    f2 = open(sys.argv[1] + fname + '_rrc.csv', 'w')
-    print(">>>>>")
+    f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
+    f2 = open(os.path.join(sys.argv[1], fname+'_rrc.csv') , 'w')
+    print("rrc >>>>>")
     #Writing the column names... If you want to add something, don't forget the comma at the end!!
     #-------------------------------------------------
     f2.write(",".join(["time", "type_id",
