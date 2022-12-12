@@ -79,7 +79,10 @@ def get_event_paras(f, eventId, l):
     if eventId == "eventA1 (0)" or eventId == "eventA2 (1)": ## A1 or A2
         if "\"lte-rrc.eventId\"" in l:
             l = passlines(4, f)
-            threshold =  get_text(l, "threshold-RSRP")
+            if "\"lte-rrc.threshold_RSRQ\"" in l: # Use RSRQ for event A2
+                threshold =  get_text(l, "threshold-RSRQ")   
+            else: # Use RSRP for event A2
+                threshold =  get_text(l, "threshold-RSRP")
             threshold = threshold.split(" ")[0]
             hysteresis, timeToTrigger = lte_get_hys_and_ttt()
             paras['thr'], paras['hys'], paras['ttt'] = threshold, hysteresis, timeToTrigger
@@ -104,10 +107,16 @@ def get_event_paras(f, eventId, l):
     elif eventId == "eventA5 (4)": ## A5
         if "\"lte-rrc.eventId\"" in l:
             l = passlines(4, f)
-            threshold1 =  get_text(l, "threshold-RSRP")
+            if "\"lte-rrc.threshold_RSRQ\"" in l: # Use RSRQ for event A5
+                threshold1 =  get_text(l, "threshold-RSRQ")   
+            else: # Use RSRP for event A5
+                threshold1 =  get_text(l, "threshold-RSRP")
             threshold1 = threshold1.split(" ")[0]
             l = passlines(4, f)
-            threshold2 =  get_text(l, "threshold-RSRP")
+            if "\"lte-rrc.threshold_RSRQ\"" in l: # Use RSRQ for event A5
+                threshold2 =  get_text(l, "threshold-RSRQ")   
+            else: # Use RSRP for event A5
+                threshold2 =  get_text(l, "threshold-RSRP")
             threshold2 = threshold2.split(" ")[0]
             hysteresis, timeToTrigger = lte_get_hys_and_ttt()
             paras['thr1'], paras['thr2'], paras['hys'], paras['ttt'] = threshold1, threshold2, hysteresis, timeToTrigger
