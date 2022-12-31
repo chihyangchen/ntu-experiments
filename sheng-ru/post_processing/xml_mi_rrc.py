@@ -188,11 +188,16 @@ for fname in filenames:
         "ssbFrequency", ## For measObjectNR
 
         "lte-ReportConfigToAddMod",
+        "lte-reportConfigId",
+        "triggerType", ## triggerType for 4G
+        "lte-eventId",
+        "lte-parameter",
+
         "nr-ReportConfigToAddMod",
-        "reportConfigId",
-        "triggerType", ## reportType for 5G OTA 
-        "eventId",
-        "parameter",
+        "nr-reportConfigId",
+        "reportType", ## reportType for 5G  
+        "nr-eventId",
+        "nr-parameter",
         
         "lte-measIdToRemoveList",
         "lte-MeasIdToAddMod",## (MeasId & measObjectId & reportConfigId)
@@ -292,11 +297,17 @@ for fname in filenames:
         "ssbFrequency",
 
         "\"lte-rrc.ReportConfigToAddMod_element\"",
+        "lte-reportConfigId",
+        "triggerType", ## triggerType for 4G
+        "lte-eventId",
+        "lte-parameter",
+
+
         "\"nr-rrc.ReportConfigToAddMod_element\"",
-        "reportConfigId",
-        "triggerType",
-        "eventId",
-        "parameter",
+        "nr-reportConfigId",    
+        "reportType", ## reportType for 5G
+        "nr-eventId",
+        "nr-parameter",
 
         "\"lte-rrc.measIdToRemoveList\"",
         "\"lte-rrc.MeasIdToAddMod_element\"",
@@ -492,32 +503,14 @@ for fname in filenames:
                                     next = 5
                                     break
                         
-                        elif type in l and (type == "\"lte-rrc.ReportConfigToAddMod_element\"" or type == "\"nr-rrc.ReportConfigToAddMod_element\""):
-                            if type == "\"lte-rrc.ReportConfigToAddMod_element\"":
-                                type_code[c] = "1"
-                                c += 2
-                                l = f.readline()
-                                multi_output_write(type_code, c, "reportConfigId", l)
-                                c += 1
-                                triggerType, l = find_next_str_and_write(type_code, f, ["triggerType", "reportType"], c)
-                                c += 1
-                            elif type == "\"nr-rrc.ReportConfigToAddMod_element\"":
-                                type_code[c] = "1"
-                                c += 1
-                                l = f.readline()
-                                multi_output_write(type_code, c, "reportConfigId", l)
-                                c += 1
-                                triggerType, l = find_next_str_and_write(type_code, f, ["triggerType", "reportType"], c)
-                                c += 1
-                            # type_code[c] = "1"
-                            # c += 1
-                            # l = f.readline()
-                            # multi_output_write(type_code, c, "reportConfigId", l)
-
-                            # c += 1
-                            # triggerType, l = find_next_str_and_write(type_code, f, ["triggerType", "reportType"], c)
-
-                            # c += 1
+                        elif type in l and type == "\"lte-rrc.ReportConfigToAddMod_element\"": 
+                            type_code[c] = "1"
+                            c += 1
+                            l = f.readline()
+                            multi_output_write(type_code, c, "reportConfigId", l)
+                            c += 1
+                            triggerType, l = find_next_str_and_write(type_code, f, ["triggerType", "reportType"], c)
+                            c += 1
                             if triggerType == "event (0)":
                                 eventId, l = find_next_str_and_write(type_code,f,["eventId"],c)
                                 c += 1
@@ -529,13 +522,23 @@ for fname in filenames:
                                 c += 1
                                 paras = r'{}'
                                 multi_output_write(type_code, c, paras)
-                            elif triggerType == "eventTriggered (1)":
+                            next = 4
+
+                        elif type in l and type == "\"nr-rrc.ReportConfigToAddMod_element\"":
+                            type_code[c] = "1"
+                            c += 1
+                            l = f.readline()
+                            multi_output_write(type_code, c, "reportConfigId", l)
+                            c += 1
+                            triggerType, l = find_next_str_and_write(type_code, f, ["triggerType", "reportType"], c)
+                            c += 1
+                            if triggerType == "eventTriggered (1)":
                                 eventId, l = find_next_str_and_write(type_code,f,["eventId"],c)
                                 c += 1
                                 paras = get_event_paras(f, eventId, l)
                                 multi_output_write(type_code, c, paras)
-
                             next = 4
+
                         elif type in l and type == "\"lte-rrc.measIdToRemoveList\"":
                             n = ''.join(filter(str.isdigit, get_text(l, "measIdToRemoveList")))
                             n = int(n)
@@ -606,7 +609,7 @@ for fname in filenames:
                                 type_code[c] = 'nr or cqi report'
                                 c += 1
                             next = 3
-                        elif type in l and type not in ["physCellId", "measObjectId", "measObject", "reportConfigId", "measId",]:
+                        elif type in l and type not in ["physCellId", "measObjectId", "measObject", "reportConfigId", "measId","carrierFreq"]:
                             type_code[c] = "1"
                             
                         c += 1
