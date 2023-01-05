@@ -31,9 +31,11 @@ def main(file_path):
 			    # filter the "time" information
 			    # filter the "lon" inforamtion
 			    # filter the "lat" information
-				if(target[0] in elem):
-					time = data_list[i].split('T')[1][:-2].split('.')[0]
-					time =str(datetime.strptime(time,'%H:%M:%S')+timedelta(hours=8)).split(' ')[1]
+				if(target[0] in elem):		# get the current timestamp
+					time = data_list[0].split(':')[2].split(" ")[1]
+#					print(datetime.fromtimestamp(time))
+#					time = data_list[i].split('T')[1][:-2].split('.')[0]
+#					time =str(datetime.strptime(time,'%H:%M:%S')+timedelta(hours=8)).split(' ')[1]
 				elif(target[1] in elem):
 					lon = data_list[i].split(':')[1]
 				elif(target[2] in elem):
