@@ -221,10 +221,11 @@ for fname in filenames:
         ###########################
 
         ## Initial setup related
+        "rrcConnectionRequest",
         "rrcConnectionSetup",
         "rrcConnectionSetupComplete",
         "securityModeCommand",
-        "SecurityModeComplete",
+        "securityModeComplete",
         ###########################
 
         ## Cell reselection related
@@ -302,7 +303,6 @@ for fname in filenames:
         "lte-eventId",
         "lte-parameter",
 
-
         "\"nr-rrc.ReportConfigToAddMod_element\"",
         "nr-reportConfigId",    
         "reportType", ## reportType for 5G
@@ -332,10 +332,11 @@ for fname in filenames:
         ###########################
 
         ## Initial Setup related
+        "\"lte-rrc.rrcConnectionRequest_element\"",
         "\"rrcConnectionSetup\"",
         "\"rrcConnectionSetupComplete\"",
         "\"securityModeCommand\"",
-        "\"SecurityModeComplete\"",
+        "\"securityModeComplete\"",
         ###########################
 
         ## Cell reselection related
@@ -618,7 +619,8 @@ for fname in filenames:
                 l = f.readline()
                 f2.write(",".join([timestamp, type_id, PCI, UL_DL, Freq] + type_code)+'\n')
         else:
-            print(l,"Error!")
+            print(l,"Error! Invalid data content.")
+
             break 
             
     f2.close()

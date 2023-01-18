@@ -37,11 +37,11 @@ if __name__ == "__main__":
         # src.enable_log("LTE_NB1_ML1_GM_DCI_Info")
 
         # Analyzers
-        lte_rrc_analyzer = LteRrcAnalyzer()
-        lte_rrc_analyzer.set_source(src)  # bind with the monitor
+        # lte_rrc_analyzer = LteRrcAnalyzer()
+        # lte_rrc_analyzer.set_source(src)  # bind with the monitor
         
-        nr_rrc_analyzer = NrRrcAnalyzer()
-        nr_rrc_analyzer.set_source(src)
+        # nr_rrc_analyzer = NrRrcAnalyzer()
+        # nr_rrc_analyzer.set_source(src)
         
         # wcdma_rrc_analyzer = WcdmaRrcAnalyzer()
         # wcdma_rrc_analyzer.set_source(src)  # bind with the monitor
@@ -52,8 +52,8 @@ if __name__ == "__main__":
         # umts_nas_analyzer = UmtsNasAnalyzer()
         # umts_nas_analyzer.set_source(src)
         
-        lte_phy_analyzer = LtePhyAnalyzer()
-        lte_phy_analyzer.set_source(src)
+        # lte_phy_analyzer = LtePhyAnalyzer()
+        # lte_phy_analyzer.set_source(src)
         
         # lte_mac_analyzer = LteMacAnalyzer()
         # lte_mac_analyzer.set_source(src)
@@ -62,8 +62,8 @@ if __name__ == "__main__":
         # lte_meas_analyzer.set_source(src)
 
         # My Analyzer
-        # my_analyzer = MyAnalyzer()
-        # my_analyzer.set_source(src)
+        my_analyzer = MyAnalyzer()
+        my_analyzer.set_source(src)
 
         # Start the monitoring
         src.run()
