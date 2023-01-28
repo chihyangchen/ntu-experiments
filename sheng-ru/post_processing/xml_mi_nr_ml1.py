@@ -7,7 +7,7 @@
 from bs4 import BeautifulSoup
 import sys
 import os
-from itertools import chain
+
 
 dirname = sys.argv[1]
 
@@ -19,24 +19,26 @@ for fname in filenames:
         
     print(fname)
     f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
-    f2 = open(os.path.join(sys.argv[1], fname+'_nr_ml1.csv') , 'w')
+    f_out = os.path.join(sys.argv[1], fname[:-4]+'_nr_ml1.csv')
+    delete = False
+    f2 = open(f_out , 'w')
     print("nr_ml1 >>>>>")
     #Writing the column names...
     #-------------------------------------------------
-    f2.write(",".join(["time", "type_id",
-        "Raster ARFCN",
-        "Num Cells",
+    columns = ["time", "type_id",
+        "PCI",
+        "RSRP(dBm)",
+        "RSRQ(dB)",
         "Serving Cell Index",
-        "Serving Cell PCI",
-        "PCI1",
-        "RSRP1",
-        "RSRP2",
+        "EARFCN",
+        "Number of Neighbor Cells",
+        "Number of Detected Cells"]
 
-        ])+'\n')
+    f2.write(",".join(columns)+'\n')
 
     l = f.readline()
 
-
+    max_length = 0
     while l:
         if r"<dm_log_packet>" in l:
             soup = BeautifulSoup(l, 'html.parser')
@@ -58,6 +60,8 @@ for fname in filenames:
                     A.append(rsrps[i])
                     A.append(rsrqs[i])
 
+                x = len([timestamp, type_id, arfcn, num_cells, serving_cell_idex, serving_cell_pci] + A)
+                max_length = x if x > max_length else max_length
                 f2.write(",".join([timestamp, type_id, arfcn, num_cells, serving_cell_idex, serving_cell_pci] + A)+'\n')
             
             else: # 只處理nr_ml1資料過濾其他type
@@ -68,7 +72,28 @@ for fname in filenames:
             
         else:
             print(l,"Error!")
+            delete = True
             break 
             
     f2.close()
     f.close()
+
+    if delete:
+        os.system(f"rm {f_out}")
+    else:
+        # csv Header process
+        with open(f_out, 'r') as csvinput:
+            new_f = f_out[:-4]+"_new.csv"
+            l = csvinput.readline()
+            x = len(l.split(','))
+            X = []
+            for i in range(int((max_length-x)/3)):
+                X += [f"PCI{i}",f"RSRP{i}",f"RSRQ{i}"]
+            X = columns+X
+            with open(new_f, 'w') as csvoutput:
+                csvoutput.write(",".join(X)+'\n')
+                l = csvinput.readline()
+                while l:
+                    csvoutput.write(l)
+                    l = csvinput.readline()
+        os.system(f"rm {f_out}") # Remove 

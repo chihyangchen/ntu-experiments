@@ -19,22 +19,22 @@ for fname in filenames:
         
     print(fname)
     f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
-    f2 = open(os.path.join(sys.argv[1], fname+'_ml1.csv') , 'w')
+    f_out = os.path.join(sys.argv[1], fname[:-4]+'_ml1.csv')
+    delete = False
+    f2 = open(f_out, 'w')
     print("ml1 >>>>>")
     #Writing the column names...
     #-------------------------------------------------
-    f2.write(",".join(["time", "type_id",
+    columns = ["time", "type_id",
         "PCI",
         "RSRP(dBm)",
         "RSRQ(dB)",
         "Serving Cell Index",
         "EARFCN",
         "Number of Neighbor Cells",
-        "Number of Detected Cells",
-        "PCI1",
-        "LTE_RSRP1",
-        "LTE_RSRQ1"
-        ])+'\n')
+        "Number of Detected Cells"]
+
+    f2.write(",".join(columns)+'\n')
 
     l = f.readline()
 
@@ -45,7 +45,7 @@ for fname in filenames:
         
     ]
 
-   
+    max_length = 0
     while l:
         if r"<dm_log_packet>" in l:
             # type_code = ["0"] * len(type_list)
@@ -71,10 +71,11 @@ for fname in filenames:
                     PCIs = PCIs[:-int(n_det_c)]
                 A = [[PCIs[i], rsrps[i+1], rsrqs[i+1]] for i in range(len(PCIs))] ## Information of neighbor cell
                 A = list(chain.from_iterable(A))
+                x = len([timestamp, type_id, PCI, rsrps[0], rsrqs[0], serving_cell, earfcn, n_nei_c, n_det_c] + A)
+                max_length = x if x > max_length else max_length
                 f2.write(",".join([timestamp, type_id, PCI, rsrps[0], rsrqs[0], serving_cell, earfcn, n_nei_c, n_det_c] + A)+'\n')
-            elif type_id == 'LTE_PHY_Connected_Mode_Neighbor_Measurement': # or type_id == 'LTE_PHY_Serv_Cell_Measurement': ## 無法parse暫時忽略
-                f2.write(",".join([timestamp, type_id, PCI, '-', '-', '-', '-', '-', '-']  )+'\n')
-                pass
+
+
             else: # 只處理ml1資料過濾其他type
                 while l and r"</dm_log_packet>" not in l:
                     l = f.readline()
@@ -84,11 +85,28 @@ for fname in filenames:
             
         else:
             print(l,"Error!")
+            delete = True
             break 
             
     f2.close()
     f.close()
 
-
-
-
+    if delete:
+        os.system(f"rm {f_out}")
+    else:
+        # csv Header process
+        with open(f_out, 'r') as csvinput:
+            new_f = f_out[:-4]+"_new.csv"
+            l = csvinput.readline()
+            x = len(l.split(','))
+            X = []
+            for i in range(int((max_length-x)/3)):
+                X += [f"PCI{i+1}",f"RSRP{i+1}",f"RSRQ{i+1}"]
+            X = columns+X
+            with open(new_f, 'w') as csvoutput:
+                csvoutput.write(",".join(X)+'\n')
+                l = csvinput.readline()
+                while l:
+                    csvoutput.write(l)
+                    l = csvinput.readline()
+        os.system(f"rm {f_out}") # Remove 

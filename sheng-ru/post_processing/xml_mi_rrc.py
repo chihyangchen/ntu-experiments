@@ -153,7 +153,9 @@ for fname in filenames:
         
     print(fname)
     f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
-    f2 = open(os.path.join(sys.argv[1], fname+'_rrc.csv') , 'w')
+    f_out = os.path.join(sys.argv[1], fname[:-4]+'_rrc.csv')
+    delete = False
+    f2 = open(f_out , 'w')
     print("rrc >>>>>")
     #Writing the column names... If you want to add something, don't forget the comma at the end!!
     #-------------------------------------------------
@@ -161,7 +163,15 @@ for fname in filenames:
         "PCI",
         "UL_DL",
         "Freq",
-
+        # Serving cell info
+        "DL frequency",
+        "UL frequency",
+        "Cell Identity",
+        "TAC",
+        "Band ID",
+        "MCC",
+        "MNC",
+        
         ## Measure report related
         "lte-measurementReport",
         "nr-measurementReport",
@@ -391,17 +401,29 @@ for fname in filenames:
                 PCI = "-"
                 Freq = '-'
 
-            if type_id != 'LTE_RRC_OTA_Packet' and type_id != '5G_NR_RRC_OTA_Packet': ## 只處理RRC
+            
+
+            if type_id == "LTE_RRC_Serv_Cell_Info": # 處理serv cell info
+                PCI = soup.find(key="Cell ID").get_text()
+                DL_f = soup.find(key="Downlink frequency").get_text()
+                UL_f = soup.find(key="Uplink frequency").get_text()
+                # DL_BW = soup.find(key="Downlink bandwidth").get_text()
+                # UL_BW = soup.find(key="Uplink bandwidth").get_text()
+                Cell_identity = soup.find(key="Cell Identity").get_text()
+                TAC = soup.find(key="TAC").get_text()
+                Band_ID = soup.find(key="Band Indicator").get_text()
+                MCC = soup.find(key="MCC").get_text()
+                # MNC_d = soup.find(key="MNC Digit").get_text()
+                MNC = soup.find(key="MNC").get_text()                
+                f2.write(",".join([timestamp, type_id, PCI,'','', DL_f, UL_f, Cell_identity, TAC, Band_ID, MCC, MNC] )+'\n')
+                l = f.readline()
+                continue
+                
+            elif type_id != 'LTE_RRC_OTA_Packet' and type_id != '5G_NR_RRC_OTA_Packet': ## 過濾其他只處理RRC
                 while l and r"</dm_log_packet>" not in l:
                     l = f.readline()
                 l = f.readline()
                 continue
-            # if r"</dm_log_packet>" in l: # 過濾不能parse只有一行的message
-
-            #     l = f.readline()
-            #     continue
-                # f2.write(",".join([timestamp, type_id, PCI, "-"] + type_code)+'\n')
-            # print(222)
 
             else:
                 UL_DL = '-'
@@ -617,13 +639,17 @@ for fname in filenames:
                     
                     l = f.readline()
                 l = f.readline()
-                f2.write(",".join([timestamp, type_id, PCI, UL_DL, Freq] + type_code)+'\n')
+                f2.write(",".join([timestamp, type_id, PCI, UL_DL, Freq] + ['']*7 + type_code)+'\n')
         else:
             print(l,"Error! Invalid data content.")
-
+            delete = True
             break 
-            
+    
     f2.close()
     f.close()
+    
+    if delete:
+        os.system(f"rm {f_out}")
+    
 
 
