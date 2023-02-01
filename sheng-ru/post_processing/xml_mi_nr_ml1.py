@@ -26,13 +26,11 @@ for fname in filenames:
     #Writing the column names...
     #-------------------------------------------------
     columns = ["time", "type_id",
-        "PCI",
-        "RSRP(dBm)",
-        "RSRQ(dB)",
+        "Raster ARFCN",
+        "Num Cells",
         "Serving Cell Index",
-        "EARFCN",
-        "Number of Neighbor Cells",
-        "Number of Detected Cells"]
+        "Serving Cell PCI",
+        ]
 
     f2.write(",".join(columns)+'\n')
 
