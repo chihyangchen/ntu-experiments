@@ -12,7 +12,7 @@ case "$1" in
     qc01)
         DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_bc4587d-if03-port0"
         ;;
-    qe02)
+    qc02)
         DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if03-port0"
         ;;
     qc03)
