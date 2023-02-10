@@ -32,7 +32,7 @@ GET_AT_PATH $interface
     echo "current modem status"
     mxat -d $DEV_AT_PATH -c at+cops?
 	echo "connection status"
-    mxat -d $DEV_AT_PATH -c at+qengg=\"servingcell\"
+    mxat -d $DEV_AT_PATH -c at+qeng=\"servingcell\"
 
 
 
