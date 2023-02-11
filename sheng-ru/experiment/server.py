@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import socket
 
-HOST = '0.0.0.0'
+HOST = '140.112.77.51'
 PORT = 3230
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
