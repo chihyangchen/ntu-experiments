@@ -7,10 +7,12 @@ Devise your own analyzer
 
 from .analyzer import *
 
-import datetime
+import datetime as dt
+from datetime import datetime
 import time
 from collections import namedtuple
 import ast
+import copy
 
 class MyAnalyzer(Analyzer):
     """
@@ -27,6 +29,17 @@ class MyAnalyzer(Analyzer):
         self.serv_cell_rsrp = []  # rsrp measurements
         self.serv_cell_rsrq = []  # rsrq measurements
         
+        # init feature element
+        self.SS_DICT = self.ss_dict(d={})
+        self.NR_SS_DICT = self.nr_ss_dict(d={})
+        self.featuredict = {
+            'LTE_HO': 0, 'MN_HO': 0, 'eNB_to_ENDC': 0, 'gNB_Rel': 0, 'gNB_HO': 0, 'RLF': 0, 'SCG_RLF': 0,
+            'RSRP': 0, 'RSRQ': 0, 'RSRP1': 0, 'RSRQ1': 0, 'RSRP2': 0, 'RSRQ2': 0, 
+            'nr-RSRP': 0, 'nr-RSRQ': 0, 'nr-RSRP1': 0, 'nr-RSRQ1': 0, 'nr-RSRP2': 0, 'nr-RSRQ2':0
+        }
+        self.timepoint = dt.datetime.now().replace(microsecond=0)
+        self.features_buffer = copy.deepcopy(self.featuredict)
+
         # for testing
         self.test_num = 0
 
@@ -41,6 +54,7 @@ class MyAnalyzer(Analyzer):
         # enable user's internal events
         source.enable_log("LTE_PHY_Connected_Mode_Intra_Freq_Meas")
         source.enable_log("LTE_RRC_OTA_Packet")
+        source.enable_log("5G_NR_RRC_OTA_Packet")
         source.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
 
     def ue_event_filter(self, msg):
@@ -50,19 +64,37 @@ class MyAnalyzer(Analyzer):
         :param type: trace collector
         """
         # TODO: support more user events
-        # self.serving_cell_rsrp(msg)
         # self.test(msg)
-        # self.signal_strength(msg)
+        self.signal_strength(msg)
         self.nr_signal_strength(msg)
         # self.ho_events(msg)
+        self.get_features()
+
+    def get_features(self):
+        now = dt.datetime.now().replace(microsecond=0)
+        if (dt.datetime.now().replace(microsecond=0) - self.timepoint).total_seconds() > 1:
+            self.ss_dict_to_featuredict() # Give featuredictlte signal strength features
+            self.nr_ss_dict_to_featuredict()
+            self.features_buffer = copy.deepcopy(self.featuredict) # update feature buffer with fearure dict
+            print(self.featuredict)
+            self.timepoint = now
+            self.CleanFeaturedict() # Clean feature dict
+        
+    def CleanFeaturedict(self):
+        for key in self.featuredict:
+            self.featuredict[key] = 0
+        self.SS_DICT = self.ss_dict(d={})
+        self.NR_SS_DICT = self.nr_ss_dict(d={})
 
     def signal_strength(self, msg):
         if msg.type_id == "LTE_PHY_Connected_Mode_Intra_Freq_Meas":
             msg_dict = dict(msg.data.decode())
             # Create Imitate pandas data
             _pd_data = self.create_pd_data(msg_dict)
-            SS_DICT = self.ss_dict(_pd_data)
-            print(SS_DICT)
+            serv_cell_idx = _pd_data['Serving Cell Index']
+            if serv_cell_idx=='PCell':
+                self.SS_DICT += self.ss_dict(_pd_data)
+            # print(self.SS_DICT)
             # print(msg_dict)
     
     def create_pd_data(self, msg_dict):
@@ -73,21 +105,78 @@ class MyAnalyzer(Analyzer):
         _pd_data["neis"] = msg_dict['Neighbor Cells']
         return _pd_data
 
+    # Give featuredict lte signal strength imformation from ss_dict accumulated for one seconds
+    def ss_dict_to_featuredict(self): 
+
+         # Get primary serv cell rsrp, rsrq 
+        if len(self.SS_DICT.dict["PCell"][0]) != 0:
+            pcell_rsrp = sum(self.SS_DICT.dict["PCell"][0])/len(self.SS_DICT.dict["PCell"][0])
+            pcell_rsrq = sum(self.SS_DICT.dict["PCell"][1])/len(self.SS_DICT.dict["PCell"][0])
+        else:
+            pcell_rsrp, pcell_rsrq = self.features_buffer['RSRP'], self.features_buffer['RSRQ'] # No sample value, use the previous one
+        self.SS_DICT.dict.pop("PCell") 
+        self.featuredict['RSRP'], self.featuredict['RSRQ'] = pcell_rsrp, pcell_rsrq
+
+        # Get 1st, 2nd neighbor cell rsrp, rsrq
+        if len(self.SS_DICT.dict) != 0:
+            cell1 = max(self.SS_DICT.dict, key=lambda x:sum(self.SS_DICT.dict[x][0])/len(self.SS_DICT.dict[x][0]))
+            cell1_rsrp = sum(self.SS_DICT.dict[cell1][0])/len(self.SS_DICT.dict[cell1][0])
+            cell1_rsrq = sum(self.SS_DICT.dict[cell1][1])/len(self.SS_DICT.dict[cell1][0])
+            self.SS_DICT.dict.pop(cell1)
+        else:
+            cell1_rsrp, cell1_rsrq = 0,0 # No sample value, assign 0
+        self.featuredict['RSRP1'], self.featuredict['RSRQ1'] = cell1_rsrp, cell1_rsrq
+
+        if len(self.SS_DICT.dict) != 0:
+            cell2 = max(self.SS_DICT.dict, key=lambda x:sum(self.SS_DICT.dict[x][0])/len(self.SS_DICT.dict[x][0]))
+            cell2_rsrp = sum(self.SS_DICT.dict[cell2][0])/len(self.SS_DICT.dict[cell2][0])
+            cell2_rsrq = sum(self.SS_DICT.dict[cell2][1])/len(self.SS_DICT.dict[cell2][0])
+            self.SS_DICT.dict.pop(cell2)
+        else:
+            cell2_rsrp, cell2_rsrq = 0,0 # No sample value, assign 0
+        self.featuredict['RSRP2'], self.featuredict['RSRQ2'] = cell2_rsrp, cell2_rsrq
+
     def nr_signal_strength(self, msg):
         if msg.type_id == "5G_NR_ML1_Searcher_Measurement_Database_Update_Ext":
             msg_dict = dict(msg.data.decode())
-            CCL0 = msg_dict['Component_Carrier List'][0]
-            _pd_data = {}
-            _pd_data['time'], _pd_data["Serving Cell PCI"] = msg_dict['timestamp'], CCL0['Serving Cell PCI']
-            _pd_data['neis'] = CCL0['Cells']
-            NR_SS_DICT = self.nr_ss_dict(_pd_data)
-            print(NR_SS_DICT)
-            raise
+            _pd_data = self.create_pd_data_nr(msg_dict)
+            self.NR_SS_DICT += self.nr_ss_dict(_pd_data)
     
     def create_pd_data_nr(self, msg_dict):
-        _pd_data = {} 
-        
+        CCL0 = msg_dict['Component_Carrier List'][0]
+        _pd_data = {}
+        _pd_data['time'], _pd_data["Serving Cell PCI"] = msg_dict['timestamp'], CCL0['Serving Cell PCI']
+        _pd_data['neis'] = CCL0['Cells']
         return _pd_data
+
+    def nr_ss_dict_to_featuredict(self):
+        # Get primary secondary serv cell rsrp, rsrq 
+        if len(self.NR_SS_DICT.dict["PSCell"][0]) != 0:
+            pscell_rsrp = sum(self.NR_SS_DICT.dict["PSCell"][0])/len(self.NR_SS_DICT.dict["PSCell"][0])
+            pscell_rsrq = sum(self.NR_SS_DICT.dict["PSCell"][1])/len(self.NR_SS_DICT.dict["PSCell"][0])
+        else:
+            pscell_rsrp, pscell_rsrq = 0,0 # No nr serving or no sample value assign 0
+        self.featuredict['nr-RSRP'], self.featuredict['nr-RSRQ'] = pscell_rsrp, pscell_rsrq
+
+        # Get 1st, 2nd neighbor cell rsrp, rsrq
+        if len(self.NR_SS_DICT.dict) != 0:
+            cell1 = max(self.NR_SS_DICT.dict, key=lambda x:sum(self.NR_SS_DICT.dict[x][0])/len(self.NR_SS_DICT.dict[x][0]))
+            cell1_rsrp = sum(self.NR_SS_DICT.dict[cell1][0])/len(self.NR_SS_DICT.dict[cell1][0])
+            cell1_rsrq = sum(self.NR_SS_DICT.dict[cell1][1])/len(self.NR_SS_DICT.dict[cell1][0])
+            self.NR_SS_DICT.dict.pop(cell1)
+        else:
+            cell1_rsrp, cell1_rsrq = 0,0 # No sample value, assign 0
+        self.featuredict['nr-RSRP1'], self.featuredict['nr-RSRQ1'] = cell1_rsrp, cell1_rsrq
+
+        if len(self.NR_SS_DICT.dict) != 0:
+            cell2 = max(self.NR_SS_DICT.dict, key=lambda x:sum(self.NR_SS_DICT.dict[x][0])/len(self.NR_SS_DICT.dict[x][0]))
+            cell2_rsrp = sum(self.NR_SS_DICT.dict[cell2][0])/len(self.NR_SS_DICT.dict[cell2][0])
+            cell2_rsrq = sum(self.NR_SS_DICT.dict[cell2][1])/len(self.NR_SS_DICT.dict[cell2][0])
+            self.NR_SS_DICT.dict.pop(cell2)
+        else:
+            # cell2_rsrp, cell2_rsrq = '-', '-'
+            cell2_rsrp, cell2_rsrq = 0,0 # No sample value, assign 0
+        self.featuredict['nr-RSRP2'], self.featuredict['nr-RSRQ2'] = cell2_rsrp, cell2_rsrq
 
     def ho_events(self, msg):
         if msg.type_id == "LTE_RRC_OTA_Packet":
