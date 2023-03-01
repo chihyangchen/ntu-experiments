@@ -1,11 +1,11 @@
-# time_sync.py
+## time_sync.py
 
 Please edit the HOST and PORT parameter first.
 
 ## usage
 ```
-server: python time_sync.py -s \<filename\>
-client: python time_sync.py -c \<filename\>
+server: python time_sync.py -s <filename>
+client: python time_sync.py -c <filename>
 ```
 
 Use \<filename\> to recongnize time syncronization before/after experiment.
