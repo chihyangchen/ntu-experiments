@@ -13,12 +13,14 @@ Note: there's little error handling so if output RTT seems weird (e.g. \< 0 ms),
 
 ## clock_diff.py
 
-### clock_diff()
+### usage
+
+#### clock_diff()
 
 Return 4 variables: ``ref_time1``, ``ref_time2``, ``diff1``, ``diff2``,
 the reference timestamp and clock difference at that time before or after the experiment.
 ``diff1`` and ``diff2`` is the time server faster than client (unit: second.)
 
-### server_time_to_client_time(server_time, ref_time1, ref_time2, diff1, diff2)
+#### server_time_to_client_time(server_time, ref_time1, ref_time2, diff1, diff2)
 
 Convert a server timestamp to client timestamp.
