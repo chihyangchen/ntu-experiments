@@ -4,4 +4,4 @@ server: python time_sync.py -s \<filename\>
 
 client: python time_sync.py -c \<filename\>
 
-Use \<filename\> to recongnize time syncronize before/after experiment.
+Use \<filename\> to recongnize time syncronization before/after experiment.
