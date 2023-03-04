@@ -17,7 +17,7 @@ time.sleep(1)
 
 iperfproc1 = subprocess.Popen([f"iperf3 -s -B 0.0.0.0 -p {port1}"], shell=True, preexec_fn=os.setsid)
 iperfproc2 = subprocess.Popen([f"iperf3 -s -B 0.0.0.0 -p {port2}"], shell=True, preexec_fn=os.setsid)
-
+print(2)
 try:
     while True:
         time.sleep(1)
