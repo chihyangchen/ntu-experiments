@@ -1,0 +1,734 @@
+[1mdiff --git a/sheng-ru/experiment/123.pcap b/sheng-ru/experiment/123.pcap[m
+[1mdeleted file mode 100644[m
+[1mindex 7bba817..0000000[m
+Binary files a/sheng-ru/experiment/123.pcap and /dev/null differ
+* Unmerged path sheng-ru/experiment/server.py
+[1mdiff --git a/sheng-ru/experiment/server.py b/sheng-ru/experiment/server.py[m
+[1mdeleted file mode 100644[m
+[1mindex 919e693..0000000[m
+[1m--- a/sheng-ru/experiment/server.py[m
+[1m+++ /dev/null[m
+[36m@@ -1,192 +0,0 @@[m
+[31m-#!/usr/bin/env python3[m
+[31m-# -*- coding: utf-8 -*-[m
+[31m-import socket[m
+[31m-import argparse[m
+[31m-import sys[m
+[31m-import time[m
+[31m-import signal[m
+[31m-import subprocess[m
+[31m-import os[m
+[31m-import threading[m
+[31m-import multiprocessing[m
+[31m-[m
+[31m-# Default parameter[m
+[31m-HOST = '0.0.0.0' # 140.112.20.183[m
+[31m-PORT = 3250[m
+[31m-pcap_path = '/home/wmnlab/D/sheng-ru/ntu-experiments/sheng-ru/experiment/123.pcap'[m
+[31m-[m
+[31m-#====================argument parsing==============================[m
+[31m-parser = argparse.ArgumentParser()[m
+[31m-parser.add_argument("-p", "--port", type=int,[m
+[31m-                    help="port to bind", default=PORT)[m
+[31m-parser.add_argument("-l", "--length", type=int,[m
+[31m-                    help="payload length", default=250)[m
+[31m-parser.add_argument("-b", "--bandwidth", type=int,[m
+[31m-                    help="data rate (bits per second)", default=200000)   [m
+[31m-parser.add_argument("-t", "--time", type=int,[m
+[31m-                    help="maximum experiment time", default=3600)[m
+[31m-[m
+[31m-args = parser.parse_args()[m
+[31m-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)[m
+[31m-s.bind((HOST, args.port))[m
+[31m-[m
+[31m-length_packet = args.length[m
+[31m-bandwidth = args.bandwidth[m
+[31m-total_time = args.time[m
+[31m-[m
+[31m-expected_packet_per_sec = bandwidth / (length_packet << 3)[m
+[31m-sleeptime = 1.0 / expected_packet_per_sec[m
+[31m-[m
+[31m-#==================================================================[m
+[31m-print('server start at: %s:%s' % (HOST, args.port))[m
+[31m-print('wait for connection...')[m
+[31m-tcpdumpproc = subprocess.Popen([f"tcpdump -i any port {args.port} -w {pcap_path}"],[m
+[31m-            shell=True, start_new_session=True)[m
+[31m-[m
+[31m-# Transmit function define[m
+[31m-seq = 1[m
+[31m-prev_transmit = 1[m
+[31m-[m
+[31m-start_time = time.time()[m
+[31m-next_transmit_time = start_time + sleeptime[m
+[31m-[m
+[31m-udp_addrs = {}[m
+[31m-[m
+[31m-def transmit():[m
+[31m-    [m
+[31m-    global start_time, seq, prev_transmit, next_transmit_time, udp_addrs[m
+[31m-    time_slot = 1[m
+[31m-[m
+[31m-    while time.time() - start_time < total_time:[m
+[31m-[m
+[31m-        t = time.time()[m
+[31m-        while t < next_transmit_time:[m
+[31m-            t = time.time()[m
+[31m-        next_transmit_time = next_transmit_time + sleeptime[m
+[31m-[m
+[31m-        datetimedec = int(t)[m
+[31m-        microsec = int((t - int(t))*1000000)[m
+[31m-[m
+[31m-        redundant = os.urandom(length_packet-4*3)[m
+[31m-        outdata = datetimedec.to_bytes(4, 'big') + microsec.to_bytes(4, 'big') + seq.to_bytes(4, 'big') + redundant[m
+[31m-        [m
+[31m-        for i in udp_addrs:[m
+[31m-            s.sendto(outdata, udp_addrs[i]) ## ?????[m
+[31m-            print('yes')[m
+[31m-[m
+[31m-        seq += 1[m
+[31m-[m
+[31m-        if time.time() - start_time > time_slot:[m
+[31m-            print("[%d-%d]"%(time_slot-1, time_slot), "transmit", seq-prev_transmit, f'| seq: {seq}')[m
+[31m-            time_slot += 1[m
+[31m-            prev_transmit = seq[m
+[31m-            print(udp_addrs)[m
+[31m-[m
+[31m-# Receive function define[m
+[31m-[m
+[31m-def receive():[m
+[31m-    [m
+[31m-    global udp_addrs[m
+[31m-    time_slot = 1[m
+[31m-    max_seq = 1[m
+[31m-    prev_recv = 1[m
+[31m-    [m
+[31m-    while True:[m
+[31m-        [m
+[31m-        try:[m
+[31m-            indata, addr = s.recvfrom(1024)[m
+[31m-            udp_addrs[0] = addr[m
+[31m-[m
+[31m-            try: start_recieve_time[m
+[31m-            except NameError: [m
+[31m-                start_recieve_time = time.time()[m
+[31m-            if len(indata) != length_packet:[m
+[31m-                print("packet with strange length: ", len(indata))[m
+[31m-[m
+[31m-            rec_seq = int(indata.hex()[16:24], 16)[m
+[31m-            max_seq = max(max_seq, rec_seq)[m
+[31m-            ts = int(int(indata.hex()[0:8], 16)) + float("0." + str(int(indata.hex()[8:16], 16)))[m
+[31m-[m
+[31m-            if time.time()-start_recieve_time > time_slot:[m
+[31m-                print("[%d-%d]"%(time_slot-1, time_slot), "recieve", rec_seq-prev_recv, f'| seq: {rec_seq}')[m
+[31m-                time_slot += 1[m
+[31m-                prev_recv = rec_seq[m
+[31m-                print(udp_addrs)[m
+[31m-[m
+[31m-        except Exception:[m
+[31m-            print('STOP')[m
+[31m-        [m
+[31m-# Receive process[m
+[31m-p1 = multiprocessing.Process(target = receive)[m
+[31m-p1.start()[m
+[31m-[m
+[31m-# Transmit process[m
+[31m-p2 = multiprocessing.Process(target = transmit)[m
+[31m-p2.start()[m
+[31m-[m
+[31m-try:[m
+[31m-    while 1:[m
+[31m-        time.sleep(.1)[m
+[31m-except KeyboardInterrupt:[m
+[31m-    p2.terminate()[m
+[31m-    print("Terminate transmit process.")[m
+[31m-    p1.terminate()[m
+[31m-    print("Terminate receive process.")[m
+[31m-    os.killpg(os.getpgid(tcpdumpproc.pid), signal.SIGTERM)[m
+[31m-    print("Kill tcpdump process.")[m
+[31m-    s.close()[m
+[31m-[m
+[31m-# while True:[m
+[31m-#     try:[m
+[31m-#         # Receive[m
+[31m-#         indata, addr = s.recvfrom(1024)[m
+[31m-#         print(addr)[m
+[31m-[m
+[31m-#         try: start_time[m
+[31m-#         except NameError: [m
+[31m-#             start_time = time.time()[m
+[31m-[m
+[31m-#         if len(indata) != length_packet:[m
+[31m-#             print("packet with strange length: ", len(indata))[m
+[31m-[m
+[31m-#         seq = int(indata.hex()[16:24], 16)[m
+[31m-#         max_seq = max(max_seq, seq)[m
+[31m-#         ts = int(int(indata.hex()[0:8], 16)) + float("0." + str(int(indata.hex()[8:16], 16)))[m
+[31m-[m
+[31m-#         if time.time()-start_time > time_slot:[m
+[31m-#             print("[%d-%d]"%(time_slot-1, time_slot), "recieve", seq-prev_transmit, f'| seq: {seq}')[m
+[31m-#             time_slot += 1[m
+[31m-            [m
+[31m-#             prev_transmit = seq[m
+[31m-    [m
+[31m-#     except KeyboardInterrupt:[m
+[31m-#         os.killpg(os.getpgid(p.pid), signal.SIGTERM)[m
+[31m-#         s.close()[m
+[31m-#         sys.exit()[m
+[31m-[m
+[31m-#     except:[m
+[31m-#         pass[m
+[31m-[m
+[31m-[m
+[31m-[m
+[31m-# def transmit(total_time):[m
+[31m-[m
+[31m-#     start_time = time.time()[m
+[31m-#     next_transmit_time = start_time + sleeptime[m
+[31m-[m
+[31m-#     while time.time() - start_time < total_time:[m
+[31m-[m
+[31m-#         try:[m
+[31m-#             # Transmit[m
+[31m-#             t = time.time()[m
+[31m-#             while t < next_transmit_time:[m
+[31m-#                 t = time.time()[m
+[31m-#             next_transmit_time = start_time + sleeptime[m
+[31m-[m
+[31m-#             datetimedec = int(t)[m
+[31m-#             microsec = int((t-int(t))*1000000)[m
+[31m-[m
+[31m-#             redundant = os.urandom(length_packet-4*3)[m
+[31m-#             outdata = datatimedec.to_bytes(4, 'big') + microsec.to_bytes(4, 'big') + seq.to_bytes(4, 'big') + redundant[m
+[31m-[m
+[31m-#             s.sendto(outdata, udp_addr[1])[m
+\ No newline at end of file[m
+* Unmerged path sheng-ru/post_processing/test.ipynb
+[1mdiff --git a/sheng-ru/post_processing/test.ipynb b/sheng-ru/post_processing/test.ipynb[m
+[1mdeleted file mode 100644[m
+[1mindex c7fe9ff..0000000[m
+[1m--- a/sheng-ru/post_processing/test.ipynb[m
+[1m+++ /dev/null[m
+[36m@@ -1,605 +0,0 @@[m
+[31m-{[m
+[31m- "cells": [[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 8,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "import pandas as pd\n",[m
+[31m-    "import datetime as dt\n",[m
+[31m-    "import swifter\n",[m
+[31m-    "from collections import namedtuple\n",[m
+[31m-    "import matplotlib.pyplot as plt\n",[m
+[31m-    "import numpy as np\n",[m
+[31m-    "import csv\n",[m
+[31m-    "import ast"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": null,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "x = input('lll:')\n",[m
+[31m-    "while True:\n",[m
+[31m-    "    "[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 9,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "'Thu Feb  2 20:09:59 2023'"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 9,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "import time\n",[m
+[31m-    "x = time.ctime()\n",[m
+[31m-    "x"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 13,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "x = dt.datetime.now().replace(microsecond=0)"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 19,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "datetime.datetime(2023, 2, 2, 20, 29, 25)"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 19,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "y = dt.datetime.now().replace(microsecond=0)\n",[m
+[31m-    "y"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 16,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "5.0"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 16,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "(y-x).total_seconds()"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 6,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "name": "stdout",[m
+[31m-     "output_type": "stream",[m
+[31m-     "text": [[m
+[31m-      "['time', 'type_id', 'PCI', 'RSRP(dBm)', 'RSRQ(dB)', 'Serving Cell Index', 'EARFCN', 'Number of Neighbor Cells', 'Number of Detected Cells', 'PCI1', 'LTE_RSRP1', 'LTE_RSRQ1']\n"[m
+[31m-     ][m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "x = \"/home/wmnlab/diag_log_sm07_2022-12-22_16-55-29_rrc.csv\"\n",[m
+[31m-    "f = open(x)\n",[m
+[31m-    "data = csv.reader(f)\n",[m
+[31m-    "row0 = next(data)\n",[m
+[31m-    "print(row0)    "[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 1,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "x = '<msg>\\n<packet>\\n  <proto name=\"geninfo\" pos=\"0\" showname=\"General information\" size=\"17\">\\n    <field name=\"num\" pos=\"0\" show=\"0\" showname=\"Number\" value=\"0\" size=\"17\"/>\\n    <field name=\"len\" pos=\"0\" show=\"17\" showname=\"Frame Length\" value=\"11\" size=\"17\"/>\\n    <field name=\"caplen\" pos=\"0\" show=\"17\" showname=\"Captured Length\" value=\"11\" size=\"17\"/>\\n    <field name=\"timestamp\" pos=\"0\" show=\"(0)Jan  1, 1970 08:00:00.000000000 CST\" showname=\"Captured Time\" value=\"0.000000000\" size=\"17\"/>\\n  </proto>\\n  <proto name=\"frame\" showname=\"Frame 0: 17 bytes on wire (136 bits), 17 bytes captured (136 bits)\" size=\"17\" pos=\"0\">\\n    <field name=\"frame.encap_type\" showname=\"Encapsulation type: USER 1 (46)\" size=\"0\" pos=\"0\" show=\"46\"/>\\n    <field name=\"frame.number\" showname=\"Frame Number: 0\" size=\"0\" pos=\"0\" show=\"0\"/>\\n    <field name=\"frame.len\" showname=\"Frame Length: 17 bytes (136 bits)\" size=\"0\" pos=\"0\" show=\"17\"/>\\n    <field name=\"frame.cap_len\" showname=\"Capture Length: 17 bytes (136 bits)\" size=\"0\" pos=\"0\" show=\"17\"/>\\n    <field name=\"frame.marked\" showname=\"Frame is marked: False\" size=\"0\" pos=\"0\" show=\"0\"/>\\n    <field name=\"frame.ignored\" showname=\"Frame is ignored: False\" size=\"0\" pos=\"0\" show=\"0\"/>\\n    <field name=\"frame.protocols\" showname=\"Protocols in frame: user_dlt:aww:lte_rrc\" size=\"0\" pos=\"0\" show=\"user_dlt:aww:lte_rrc\"/>\\n  </proto>\\n  <proto name=\"user_dlt\" showname=\"DLT: 148, Payload: aww (Automator Wireshark Wrapper)\" size=\"17\" pos=\"0\"/>\\n  <proto name=\"aww\" showname=\"Automator Wireshark Wrapper\" size=\"17\" pos=\"0\">\\n    <field name=\"aww.proto\" showname=\"Protocol: 200\" size=\"4\" pos=\"0\" show=\"200\" value=\"000000c8\"/>\\n    <field name=\"aww.data_len\" showname=\"Data length: 9\" size=\"4\" pos=\"4\" show=\"9\" value=\"00000009\"/>\\n  </proto>\\n  <proto name=\"lte_rrc\" showname=\"LTE Radio Resource Control (RRC) protocol\" hide=\"yes\" size=\"9\" pos=\"8\"/>\\n  <proto name=\"fake-field-wrapper\">\\n    <field name=\"lte-rrc.PCCH_Message_element\" showname=\"PCCH-Message\" size=\"6\" pos=\"8\" show=\"\" value=\"\">\\n      <field name=\"per.choice_index\" showname=\"Choice Index: 0\" hide=\"yes\" size=\"1\" pos=\"8\" show=\"0\" value=\"40\"/>\\n      <field name=\"lte-rrc.message\" showname=\"message: c1 (0)\" size=\"6\" pos=\"8\" show=\"0\" value=\"40001c33ba02\">\\n        <field name=\"lte-rrc.c1\" showname=\"c1: paging (0)\" size=\"6\" pos=\"8\" show=\"0\" value=\"40001c33ba02\">\\n          <field name=\"lte-rrc.paging_element\" showname=\"paging\" size=\"6\" pos=\"8\" show=\"\" value=\"\">\\n            <field name=\"per.optional_field_bit\" showname=\".1.. .... Optional Field Bit: True (pagingRecordList is present)\" hide=\"yes\" size=\"1\" pos=\"8\" show=\"1\" value=\"1\" unmaskedvalue=\"40\"/>\\n            <field name=\"per.optional_field_bit\" showname=\"..0. .... Optional Field Bit: False (systemInfoModification is NOT present)\" hide=\"yes\" size=\"1\" pos=\"8\" show=\"0\" value=\"0\" unmaskedvalue=\"40\"/>\\n            <field name=\"per.optional_field_bit\" showname=\"...0 .... Optional Field Bit: False (etws-Indication is NOT present)\" hide=\"yes\" size=\"1\" pos=\"8\" show=\"0\" value=\"0\" unmaskedvalue=\"40\"/>\\n            <field name=\"per.optional_field_bit\" showname=\".... 0... Optional Field Bit: False (nonCriticalExtension is NOT present)\" hide=\"yes\" size=\"1\" pos=\"8\" show=\"0\" value=\"0\" unmaskedvalue=\"40\"/>\\n            <field name=\"per.sequence_of_length\" showname=\"Sequence-Of Length: 1\" hide=\"yes\" size=\"1\" pos=\"8\" show=\"1\" value=\"40\"/>\\n            <field name=\"lte-rrc.pagingRecordList\" showname=\"pagingRecordList: 1 item\" size=\"5\" pos=\"9\" show=\"1\" value=\"001c33ba02\">\\n              <field name=\"\" show=\"Item 0\" size=\"5\" pos=\"9\" value=\"001c33ba02\">\\n                <field name=\"lte-rrc.PagingRecord_element\" showname=\"PagingRecord\" size=\"5\" pos=\"9\" show=\"\" value=\"\">\\n                  <field name=\"per.extension_bit\" showname=\".0.. .... Extension Bit: False\" hide=\"yes\" size=\"1\" pos=\"9\" show=\"0\" value=\"0\" unmaskedvalue=\"00\"/>\\n                  <field name=\"per.extension_bit\" showname=\"..0. .... Extension Bit: False\" hide=\"yes\" size=\"1\" pos=\"9\" show=\"0\" value=\"0\" unmaskedvalue=\"00\"/>\\n                  <field name=\"per.choice_index\" showname=\"Choice Index: 0\" hide=\"yes\" size=\"1\" pos=\"9\" show=\"0\" value=\"00\"/>\\n                  <field name=\"lte-rrc.ue_Identity\" showname=\"ue-Identity: s-TMSI (0)\" size=\"5\" pos=\"9\" show=\"0\" value=\"001c33ba02\">\\n                    <field name=\"lte-rrc.s_TMSI_element\" showname=\"s-TMSI\" size=\"5\" pos=\"9\" show=\"\" value=\"\">\\n                      <field name=\"lte-rrc.mmec\" showname=\"mmec: 01 [bit length 8, 0000 0001 decimal value 1]\" size=\"1\" pos=\"9\" show=\"01\" value=\"01\"/>\\n                      <field name=\"lte-rrc.m_TMSI\" showname=\"m-TMSI: c33ba02a [bit length 32, 1100 0011  0011 1011  1010 0000  0010 1010 decimal value 3275464746]\" size=\"4\" pos=\"9\" show=\"c3:3b:a0:2a\" value=\"c33ba02a\"/>\\n                    </field>\\n                  </field>\\n                  <field name=\"per.enum_index\" showname=\"Enumerated Index: 0\" hide=\"yes\" size=\"1\" pos=\"14\" show=\"0\" value=\"a0\"/>\\n                  <field name=\"lte-rrc.cn_Domain\" showname=\"cn-Domain: ps (0)\" size=\"1\" pos=\"14\" show=\"0\" value=\"a0\"/>\\n                </field>\\n              </field>\\n            </field>\\n          </field>\\n        </field>\\n      </field>\\n  </field>\\n  </proto>\\n</packet>\\n\\n</msg>\\n'"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 7,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "name": "stdout",[m
+[31m-     "output_type": "stream",[m
+[31m-     "text": [[m
+[31m-      "['', '</msg>']\n"[m
+[31m-     ][m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "print(x.split('\\n'))"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 12,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "class abc():\n",[m
+[31m-    "    def __init__(self, a:str, b:str):\n",[m
+[31m-    "        self.a = a\n",[m
+[31m-    "        self.b = b"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 111,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "# f = \"/home/wmnlab/diag_log_sm05_2022-12-22_15-02-55.txt_rrc.csv\"\n",[m
+[31m-    "f = \"/home/wmnlab/Code_Test_Space/sheng-ru/2022-12-22/_Bandlock_Udp_B1_B3/sm05/#03/middle/diag_log_sm05_2022-12-22_15-19-32.txt_rrc.csv\"\n",[m
+[31m-    "df = pd.read_csv(f)\n",[m
+[31m-    "df[\"time\"] = df[\"time\"].swifter.apply(lambda x: pd.to_datetime(x) + dt.timedelta(hours=8))"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 25,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "x = 3\n",[m
+[31m-    "def p():\n",[m
+[31m-    "    print(x)"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 31,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "2"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 31,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "x = '[2,3,5]'\n",[m
+[31m-    "ast.literal_eval(x)"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 26,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "name": "stdout",[m
+[31m-     "output_type": "stream",[m
+[31m-     "text": [[m
+[31m-      "3\n",[m
+[31m-      "3\n"[m
+[31m-     ][m
+[31m-    },[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "3"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 26,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "print(x)\n",[m
+[31m-    "p()\n",[m
+[31m-    "x"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 113,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "def parse_mi_ho(df):\n",[m
+[31m-    "    def NR_OTA():\n",[m
+[31m-    "        if df[\"type_id\"].iloc[i] == \"5G_NR_RRC_OTA_Packet\":\n",[m
+[31m-    "            return True\n",[m
+[31m-    "        else:\n",[m
+[31m-    "            return False\n",[m
+[31m-    "\n",[m
+[31m-    "    def find_1st_after(target, look_after=1):\n",[m
+[31m-    "        for j in range(i, len(df)):\n",[m
+[31m-    "            t_ = df[\"time\"].iloc[j]\n",[m
+[31m-    "            if (t_ - t).total_seconds() > look_after:\n",[m
+[31m-    "                return None, None\n",[m
+[31m-    "            if df[target].iloc[j] not in [0,'0']:\n",[m
+[31m-    "                return t_, j\n",[m
+[31m-    "\n",[m
+[31m-    "    def find_1st_before(target, look_before=1):\n",[m
+[31m-    "        for j in range(i, -1, -1):\n",[m
+[31m-    "            t_ = df[\"time\"].iloc[j]\n",[m
+[31m-    "            if (t - t_).total_seconds() > look_before:\n",[m
+[31m-    "                return None, None\n",[m
+[31m-    "            if df[target].iloc[j] not in [0,'0']:\n",[m
+[31m-    "                return t_, j\n",[m
+[31m-    "\n",[m
+[31m-    "    HO = namedtuple('HO','start, end, others', defaults=(None,None))\n",[m
+[31m-    "\n",[m
+[31m-    "    D = {\n",[m
+[31m-    "        'Conn_Rel':[], \n",[m
+[31m-    "        'Conn_Req':[], # Setup\n",[m
+[31m-    "        'LTE_HO': [], # LTE -> newLTE\n",[m
+[31m-    "        'MN_HO': [], # LTE + NR -> newLTE + NR\n",[m
+[31m-    "        'SN_setup': [], # LTE -> LTE + NR => NR setup\n",[m
+[31m-    "        'SN_Rel': [], # LTE + NR -> LTE\n",[m
+[31m-    "        'SN_HO': [], # LTE + NR -> LTE + newNR\n",[m
+[31m-    "        # 'HOF': [], # Didn't defined yet.\n",[m
+[31m-    "        'RLF_II': [],\n",[m
+[31m-    "        'RLF_III': [],\n",[m
+[31m-    "        'SCG_RLF': [],\n",[m
+[31m-    "        }\n",[m
+[31m-    "\n",[m
+[31m-    "    for i in range(len(df)):\n",[m
+[31m-    "        if NR_OTA():\n",[m
+[31m-    "            continue\n",[m
+[31m-    "\n",[m
+[31m-    "        t = df[\"time\"].iloc[i]\n",[m
+[31m-    "        \n",[m
+[31m-    "        if df[\"rrcConnectionRelease\"].iloc[i] == 1:\n",[m
+[31m-    "            D['Conn_Rel'].append(HO(start=t))\n",[m
+[31m-    "\n",[m
+[31m-    "        if df[\"rrcConnectionRequest\"].iloc[i] == 1:\n",[m
+[31m-    "            a = find_1st_after('rrcConnectionReconfigurationComplete',look_after=2)[0]\n",[m
+[31m-    "            b = find_1st_after('securityModeComplete',look_after=2)[0]\n",[m
+[31m-    "            end = a if a > b else b\n",[m
+[31m-    "            D['Conn_Req'].append(HO(start=t,end=end))\n",[m
+[31m-    "        \n",[m
+[31m-    "        if df[\"lte-rrc.t304\"].iloc[i] == 1:\n",[m
+[31m-    "            end, _ = find_1st_after('rrcConnectionReconfigurationComplete')\n",[m
+[31m-    "            serv_cell, target_cell = df[\"PCI\"].iloc[i], df['lte_targetPhysCellId'].iloc[i]\n",[m
+[31m-    "            serv_freq, target_freq = df[\"Freq\"].iloc[i], df['dl-CarrierFreq'].iloc[i]\n",[m
+[31m-    "            if df[\"SCellToAddMod-r10\"].iloc[i] == 1:\n",[m
+[31m-    "                n =len(str(df[\"SCellIndex-r10.1\"].iloc[i]).split('@'))\n",[m
+[31m-    "                others=f'Set up {n} SCell.'\n",[m
+[31m-    "            else:\n",[m
+[31m-    "                others=None\n",[m
+[31m-    "            \n",[m
+[31m-    "            if serv_freq != target_freq:\n",[m
+[31m-    "                others += \" Inter freq. HO\"\n",[m
+[31m-    "            if df[\"nr-rrc.t304\"].iloc[i] == 1 and df[\"dualConnectivityPHR: setup (1)\"].iloc[i] == 1:\n",[m
+[31m-    "                if serv_cell == target_cell and serv_freq == target_freq:\n",[m
+[31m-    "                    D['eNB_to_ENDC'].append(HO(start=t, end=end, others=others))\n",[m
+[31m-    "                    # print(1, t, f\"Serving Cell: {serv_cell}->{target_cell}\")  \n",[m
+[31m-    "                else:    \n",[m
+[31m-    "                    D['MN_HO'].append(HO(start=t, end=end, others=others))\n",[m
+[31m-    "            else:\n",[m
+[31m-    "                if serv_cell == target_cell and serv_freq == target_freq:\n",[m
+[31m-    "                    a, b = find_1st_before(\"scgFailureInformationNR-r15\")\n",[m
+[31m-    "                    if a is not None:\n",[m
+[31m-    "                        others += \"Caused by scg-failure.\"\n",[m
+[31m-    "                    D['gNB_Rel'].append(HO(start=t, end=end, others=others))\n",[m
+[31m-    "                else:\n",[m
+[31m-    "                    D['LTE_HO'].append(HO(start=t, end=end, others=others))\n",[m
+[31m-    "\n",[m
+[31m-    "        if df[\"nr-rrc.t304\"].iloc[i] == 1 and not df[\"dualConnectivityPHR: setup (1)\"].iloc[i] == 1:\n",[m
+[31m-    "            end, _ = find_1st_after('rrcConnectionReconfigurationComplete')\n",[m
+[31m-    "            D['gNB_HO'].append(HO(start=t,end=end))\n",[m
+[31m-    "\n",[m
+[31m-    "        if df[\"rrcConnectionReestablishmentRequest\"].iloc[i] == 1:\n",[m
+[31m-    "            end, _ = find_1st_after('rrcConnectionReestablishmentComplete', look_after=1)\n",[m
+[31m-    "            b, _ = find_1st_after('rrcConnectionReestablishmentReject', look_after=1)\n",[m
+[31m-    "            others = df[\"reestablishmentCause\"].iloc[i]\n",[m
+[31m-    "            if end is not None: \n",[m
+[31m-    "                # Type II\n",[m
+[31m-    "                D['RLF_II'].append(HO(start=t,end=end,others=others))\n",[m
+[31m-    "            else: \n",[m
+[31m-    "                # Type III\n",[m
+[31m-    "                D['RLF_III'].append(HO(start=t,end=b,others=others)) # End for Type III?\n",[m
+[31m-    "            \n",[m
+[31m-    "        if df[\"scgFailureInformationNR-r15\"].iloc[i] == 1:\n",[m
+[31m-    "            others = df[\"failureType-r15\"].iloc[i]\n",[m
+[31m-    "            D['SCG_RLF'].append(HO(start=t,others=others))\n",[m
+[31m-    "    \n",[m
+[31m-    "    return D"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 115,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "A = parse_mi_ho(df)"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 133,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "{'Conn_Rel': [HO(start=Timestamp('2022-12-22 15:19:25.390271'), end=None, others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:25:52.457582'), end=None, others=None)],\n",[m
+[31m-       " 'Conn_Req': [HO(start=Timestamp('2022-12-22 15:19:56.591386'), end=Timestamp('2022-12-22 15:19:56.713021'), others=None)],\n",[m
+[31m-       " 'LTE_HO': [HO(start=Timestamp('2022-12-22 15:19:57.061383'), end=Timestamp('2022-12-22 15:19:57.101553'), others='Set up 3 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:28.180037'), end=Timestamp('2022-12-22 15:21:28.208750'), others='Set up 3 SCell. Inter freq. HO'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:22:23.999133'), end=Timestamp('2022-12-22 15:22:24.031772'), others='Set up 2 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:23:41.733352'), end=Timestamp('2022-12-22 15:23:41.769395'), others='Set up 3 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:44.910368'), end=Timestamp('2022-12-22 15:24:44.946386'), others='Set up 3 SCell.')],\n",[m
+[31m-       " 'MN_HO': [HO(start=Timestamp('2022-12-22 15:19:14.032084'), end=Timestamp('2022-12-22 15:19:14.058822'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:20:26.974650'), end=Timestamp('2022-12-22 15:20:26.991420'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:20:34.987508'), end=Timestamp('2022-12-22 15:20:35.005332'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:20:39.018799'), end=Timestamp('2022-12-22 15:20:39.035323'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:20:48.780163'), end=Timestamp('2022-12-22 15:20:48.797117'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:20:49.150474'), end=Timestamp('2022-12-22 15:20:49.167143'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:06.885801'), end=Timestamp('2022-12-22 15:21:06.904129'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:08.470194'), end=Timestamp('2022-12-22 15:21:08.487051'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:11.036728'), end=Timestamp('2022-12-22 15:21:11.076288'), others='Set up 1 SCell. Inter freq. HO'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:11.697090'), end=Timestamp('2022-12-22 15:21:11.713193'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:32.150377'), end=Timestamp('2022-12-22 15:21:32.166961'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:34.155257'), end=Timestamp('2022-12-22 15:21:34.171980'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:22:08.055277'), end=Timestamp('2022-12-22 15:22:08.071870'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:22:32.431841'), end=Timestamp('2022-12-22 15:22:32.448915'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:23:28.520871'), end=Timestamp('2022-12-22 15:23:28.537728'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:23:47.110325'), end=Timestamp('2022-12-22 15:23:47.127641'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:38.069416'), end=Timestamp('2022-12-22 15:24:38.087135'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:47.459140'), end=Timestamp('2022-12-22 15:24:47.475276'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:49.855438'), end=Timestamp('2022-12-22 15:24:49.872086'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:54.055355'), end=Timestamp('2022-12-22 15:24:54.070266'), others='Set up 1 SCell.')],\n",[m
+[31m-       " 'eNB_to_ENDC': [HO(start=Timestamp('2022-12-22 15:19:15.187618'), end=Timestamp('2022-12-22 15:19:15.207854'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:19:56.907081'), end=Timestamp('2022-12-22 15:19:56.947775'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:19:57.546284'), end=Timestamp('2022-12-22 15:19:57.586656'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:18.265284'), end=Timestamp('2022-12-22 15:21:18.311377'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:28.405242'), end=Timestamp('2022-12-22 15:21:28.426514'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:40.299629'), end=Timestamp('2022-12-22 15:21:40.337536'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:22:24.254615'), end=Timestamp('2022-12-22 15:22:24.295553'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:23:42.146889'), end=Timestamp('2022-12-22 15:23:42.186789'), others='Set up 1 SCell.'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:45.274409'), end=Timestamp('2022-12-22 15:24:45.316392'), others='Set up 1 SCell.')],\n",[m
+[31m-       " 'gNB_Rel': [HO(start=Timestamp('2022-12-22 15:21:16.457800'), end=Timestamp('2022-12-22 15:21:16.493833'), others='Set up 3 SCell.')],\n",[m
+[31m-       " 'gNB_HO': [HO(start=Timestamp('2022-12-22 15:20:10.182948'), end=Timestamp('2022-12-22 15:20:10.199359'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:20:25.803919'), end=Timestamp('2022-12-22 15:20:25.820452'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:31.465596'), end=Timestamp('2022-12-22 15:21:31.483267'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:22:06.892612'), end=Timestamp('2022-12-22 15:22:06.908990'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:22:33.195448'), end=Timestamp('2022-12-22 15:22:33.212767'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:23:27.656307'), end=Timestamp('2022-12-22 15:23:27.674319'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:39.726810'), end=Timestamp('2022-12-22 15:24:39.743316'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:44.830043'), end=Timestamp('2022-12-22 15:24:44.845314'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:50.631738'), end=Timestamp('2022-12-22 15:24:50.648053'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:24:54.836732'), end=Timestamp('2022-12-22 15:24:54.851904'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:25:25.687641'), end=Timestamp('2022-12-22 15:25:25.703770'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:25:28.978817'), end=Timestamp('2022-12-22 15:25:28.996303'), others=None),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:25:31.879585'), end=Timestamp('2022-12-22 15:25:31.897500'), others=None)],\n",[m
+[31m-       " 'RLF_II': [HO(start=Timestamp('2022-12-22 15:19:14.910143'), end=Timestamp('2022-12-22 15:19:14.980754'), others='otherFailure (2)'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:17.388765'), end=Timestamp('2022-12-22 15:21:17.473298'), others='otherFailure (2)'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:27.319390'), end=Timestamp('2022-12-22 15:21:27.390316'), others='otherFailure (2)'),\n",[m
+[31m-       "  HO(start=Timestamp('2022-12-22 15:21:40.008372'), end=Timestamp('2022-12-22 15:21:40.086385'), others='otherFailure (2)')],\n",[m
+[31m-       " 'RLF_III': [],\n",[m
+[31m-       " 'SCG_RLF': [HO(start=Timestamp('2022-12-22 15:21:39.315687'), end=None, others='t310-Expiry (0)')]}"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 133,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    }[m
+[31m-   ],[m
+[31m-   "source": [[m
+[31m-    "A"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 50,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "f1 = \"/home/wmnlab/test1.csv\"\n",[m
+[31m-    "f2 = \"/home/wmnlab/test2.csv\"\n",[m
+[31m-    "f3 = \"/home/wmnlab/test3.csv\"\n",[m
+[31m-    "df1 = pd.read_csv(f1)\n",[m
+[31m-    "df1[\"Timestamp\"] = df1[\"Timestamp\"].swifter.apply(lambda x: pd.to_datetime(x))\n",[m
+[31m-    "df2 = pd.read_csv(f2)\n",[m
+[31m-    "df2[\"Timestamp\"] = df2[\"Timestamp\"].swifter.apply(lambda x: pd.to_datetime(x))\n",[m
+[31m-    "df3 = pd.read_csv(f3)\n",[m
+[31m-    "df3[\"Timestamp\"] = df3[\"Timestamp\"].swifter.apply(lambda x: pd.to_datetime(x))"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 51,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "a = list(df1[\"lat\"])\n",[m
+[31m-    "b = list(df3[\"lat\"])\n",[m
+[31m-    "# c = "[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 100,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "def correlations(a, b):\n",[m
+[31m-    "    length = len(a) if len(a)<len(b) else len(b)\n",[m
+[31m-    "    if length == len(a):\n",[m
+[31m-    "        return np.corrcoef(a,b[:len(a)])\n",[m
+[31m-    "    else:\n",[m
+[31m-    "        return np.corrcoef(a[:len(b)],b)\n",[m
+[31m-    "\n",[m
+[31m-    "def gps_leg_corres(a, b, search=30): \n",[m
+[31m-    "    corres = []\n",[m
+[31m-    "    legs = list(range(-search,search+1))\n",[m
+[31m-    "    for i in range(-search,search+1):\n",[m
+[31m-    "        if i<0:\n",[m
+[31m-    "            corres.append(correlations(a[-i:], b[:])[0,1])\n",[m
+[31m-    "        else:\n",[m
+[31m-    "            corres.append(correlations(a[:], b[i:])[0,1])\n",[m
+[31m-    "    index_max = max(range(len(corres)), key=corres.__getitem__)\n",[m
+[31m-    "\n",[m
+[31m-    "    return legs[index_max]\n"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 101,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "x = gps_leg_corres(a,b)"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 103,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [],[m
+[31m-   "source": [[m
+[31m-    "if x < 0:\n",[m
+[31m-    "    x1 = list(df1[\"DL-lat\"].iloc[-x:])\n",[m
+[31m-    "    x2 = list(df3[\"DL-lat\"].iloc[:])\n",[m
+[31m-    "else:\n",[m
+[31m-    "    x1 = list(df1[\"DL-lat\"].iloc[:])\n",[m
+[31m-    "    x2 = list(df3[\"DL-lat\"].iloc[x:])"[m
+[31m-   ][m
+[31m-  },[m
+[31m-  {[m
+[31m-   "cell_type": "code",[m
+[31m-   "execution_count": 109,[m
+[31m-   "metadata": {},[m
+[31m-   "outputs": [[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "text/plain": [[m
+[31m-       "[<matplotlib.lines.Line2D at 0x7fdd9fb8c670>]"[m
+[31m-      ][m
+[31m-     },[m
+[31m-     "execution_count": 109,[m
+[31m-     "metadata": {},[m
+[31m-     "output_type": "execute_result"[m
+[31m-    },[m
+[31m-    {[m
+[31m-     "data": {[m
+[31m-      "image/png": "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
