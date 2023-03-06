@@ -9,7 +9,7 @@ port2 = 3251
 
 now = dt.datetime.today()
 t = '-'.join([str(x) for x in[ now.year%100, now.month, now.day, now.hour, now.minute]])
-save_file = "/home/wmnlab"
+# save file to 
 save_file = f"/home/wmnlab/D/sheng-ru/Data/{t}_server.pcap"
 tcpproc = subprocess.Popen([f"tcpdump -i any port {port1} or port {port2} -w {save_file}"],
                             shell=True, preexec_fn=os.setsid)
