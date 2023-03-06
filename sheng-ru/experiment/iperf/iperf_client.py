@@ -18,10 +18,10 @@ tcpproc = subprocess.Popen([f"tcpdump -i any port {port1} or port {port2} -w {sa
                             shell=True, preexec_fn=os.setsid)
 
 time.sleep(1)
-
+# UL
 iperfproc1 = subprocess.Popen([f"iperf3 -c {server_ip} -p {port1} -b {band_width} -l {packet_length} -t {experiment_time}"], 
                              shell=True, preexec_fn=os.setsid)
-# -R: server sends, client receive
+# -R: server sends, client receive -> DL
 iperfproc2 = subprocess.Popen([f"iperf3 -c {server_ip} -p {port2} -b {band_width} -l {packet_length} -t {experiment_time} -R"], 
                              shell=True, preexec_fn=os.setsid)
 
