@@ -5,15 +5,15 @@ import os
 import signal
 
 server_ip = '140.112.20.183'
-port1 = 3250
-port2 = 3251
+port1 = 3350
+port2 = 3351
 packet_length = 500 # bytes
 band_width = '200K' # bits/sec
 experiment_time = 3600 # sec
 
 now = dt.datetime.today()
 t = '-'.join([str(x) for x in[ now.year%100, now.month, now.day, now.hour, now.minute]])
-save_file = f"/home/wmnlab/Data/{t}_client.pcap"
+save_file = f"/sdcard/dataset/{t}_client.pcap"
 tcpproc = subprocess.Popen([f"tcpdump -i any port {port1} or port {port2} -w {save_file}"],
                             shell=True, preexec_fn=os.setsid)
 
