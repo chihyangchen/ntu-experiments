@@ -15,7 +15,6 @@ from mobile_insight.analyzer import *
 from mobile_insight.monitor import OnlineMonitor
 from mobile_insight.analyzer import MyAnalyzer
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -41,39 +40,41 @@ if __name__ == "__main__":
     if not os.path.exists("/home/wmnlab/Data/mobileinsight"):
         # if the demo_folder directory is not present 
         # then create it.
+        print('Build directory: /home/wmnlab/Data/mobileinsight')
         os.makedirs("/home/wmnlab/Data/mobileinsight")
 
     # Initialize online monitors
     src1 = OnlineMonitor()
     src1.set_serial_port(ser1)  # the serial port to collect the traces
     src1.set_baudrate(baudrate)  # the baudrate of the port
-    src1.save_log_as(savepath)
 
     src2 = OnlineMonitor()
     src2.set_serial_port(ser2)  # the serial port to collect the traces
     src2.set_baudrate(baudrate)  # the baudrate of the port
-    src2.save_log_as(savepath)
 
     # Set analyzer
     myanalyzer1 = MyAnalyzer()
     myanalyzer1.set_source(src1)
-
+    
     myanalyzer2 = MyAnalyzer()
     myanalyzer2.set_source(src2)
+    
 
     # Online features collected.
     def run1():
+        # save_path1 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev1}_{t}.txt")
+        # src1.save_log_as(save_path1)
         src1.run()
 
     def run2():
+        # save_path2 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev2}_{t}.txt")
+        # src2.save_log_as(save_path2)
         src2.run()
 
-    t1 = threading.Thread(target=run1)
-    t1.setDaemon(True)
+    t1 = threading.Thread(target=run1, daemon=True)
     t1.start()    
     
-    t2 = threading.Thread(target=run2)
-    t2.setDaemon(True)
+    t2 = threading.Thread(target=run2, daemon=True)
     t2.start()
 
     def get_tensor_input():
@@ -85,10 +86,6 @@ if __name__ == "__main__":
                 L.append(featuredict[key])
 
         return torch.FloatTensor(L)
-    
-    time.sleep(1) # Fill up feature_dict buffer first
-    time_seq = 15
-    print(f"Fill up time series data first. Please wait for about {time_seq} second.")
 
     count = 0
     input = torch.FloatTensor([])
@@ -96,22 +93,46 @@ if __name__ == "__main__":
     classifier = torch.load('model/best_model_loss.pt')
     classifier.eval()
 
-    while True:
-        myanalyzer1.to_featuredict()
-        myanalyzer2.to_featuredict()
-        
-        x = get_tensor_input()
+    now = dt.datetime.today()
+    t = '-'.join([str(x) for x in[ now.year%100, now.month, now.day, now.hour, now.minute]])
+    save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f'{t}.csv')
+    f_out = open(save_path, 'w')
+    f_out.write(','.join(['LTE_HO, MN_HO', 'SN_setup', 'SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
+                          'RSRP', 'RSRQ', 'RSRP1', 'RSRQ1', 'RSRP2', 'RSRQ2',
+                          'nr-RSRP', 'nr-RSRQ', 'nr-RSRP1', 'nr-RSRQ1', 'nr-RSRP2', 'nr-RSRQ2']*2)+',out\n')
+    
+    time_seq = 15
+    print(f"Fill up time series data first. Please wait for about {time_seq} second.")
+    time.sleep(1) # Clean time
+    myanalyzer1.reset()
+    myanalyzer2.reset()
+    time.sleep(1) # Fill up feature_dict buffer first
+    
+    try:
 
-        if count < time_seq-1:
-            input = torch.cat((input, torch.unsqueeze(x, dim=0)), dim=0)
-            count+=1
-        else:
-            input = torch.cat((input, torch.unsqueeze(x, dim=0)), dim=0)
-            out = classifier(input.unsqueeze(dim=0)).item()
-            print(out)
-            input = input[:-1]
+        while True:
+
+            myanalyzer1.to_featuredict()
+            myanalyzer2.to_featuredict()
             
-        myanalyzer1.reset()
-        myanalyzer2.reset()
-        time.sleep(1)
+            x = get_tensor_input()
+            if count < time_seq-1:
+                input = torch.cat((input, torch.unsqueeze(x, dim=0)), dim=0)
+                y = [str(a) for a in torch.Tensor.tolist(x)]
+                f_out.write(','.join(y) + '\n')
+                count+=1
+            else:
+                input = torch.cat((input, torch.unsqueeze(x, dim=0)), dim=0)
+                out = classifier(input.unsqueeze(dim=0)).item()
+                y = [str(a) for a in torch.Tensor.tolist(x)]
+                f_out.write(','.join(y) + f',{out}'+',\n')
+                print(out)
+                input = input[:-1]
+                
+            myanalyzer1.reset()
+            myanalyzer2.reset()
+            time.sleep(1)
+
+    except KeyboardInterrupt:
         
+        f_out.close()

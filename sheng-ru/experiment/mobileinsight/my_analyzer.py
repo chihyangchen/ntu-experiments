@@ -101,7 +101,8 @@ class MyAnalyzer(Analyzer):
         self.SS_DICT = self.ss_dict(d={'PCell':[[],[]]})
         self.NR_SS_DICT = self.nr_ss_dict(d={'PSCell':[[],[]]})
         self.init_rrc_dict()
-
+        for key in self.featuredict:
+            self.featuredict[key] = 0
     def get_featuredict(self):
         return self.featuredict
         
@@ -209,7 +210,7 @@ class MyAnalyzer(Analyzer):
 
     def init_rrc_dict(self):
         
-        for col in self.columns:
+        for col in self.columns+['PCI', 'time', 'Freq']:
             self.RRC_DICT[col] = []
 
     def read_rrc_msg_content(self, readlines: list):
@@ -446,6 +447,7 @@ class MyAnalyzer(Analyzer):
                 serv_freq, target_freq = df["Freq"][i], df['dl-CarrierFreq'][i]
                 
                 if df["nr-rrc.t304"][i] == '1' and df["dualConnectivityPHR: setup (1)"][i] == '1':
+
                     if serv_cell == target_cell and serv_freq == target_freq:
                         D['SN_setup'].append(HO(start=t))
                         # print(1, t, f"Serving Cell: {serv_cell}->{target_cell}")  

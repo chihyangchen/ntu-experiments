@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Filename: online-analysis-example.py
 import os
-import sys
+import datetime as dt
 import argparse
 import json
 import threading
@@ -33,6 +33,10 @@ if __name__ == "__main__":
     src = OnlineMonitor()
     src.set_serial_port(ser)  # the serial port to collect the traces
     src.set_baudrate(baudrate)  # the baudrate of the port
+    now = dt.datetime.today()
+    t = '-'.join([str(x) for x in[ now.year%100, now.month, now.day, now.hour, now.minute]])
+    savepath = os.path.join("/home/wmnlab/Data/mobileinsight", f"diag_log_{dev}_{t}.mi2log")
+    src.save_log_as(savepath)
 
     # Enable 3G/4G/5G RRC (radio resource control) monitoring
     # src.enable_log("5G_NR_RRC_OTA_Packet")
@@ -64,7 +68,11 @@ if __name__ == "__main__":
     t = threading.Thread(target=run, daemon=True)
     t.start()
 
+    time.sleep(1)
+    myanalyzer.reset()
+    
     while True:
+        # print(myanalyzer.RRC_DICT)
         myanalyzer.to_featuredict()
         print(myanalyzer.get_featuredict())
         myanalyzer.reset()
