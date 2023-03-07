@@ -37,14 +37,22 @@ if __name__ == "__main__":
     ser1 = os.path.join("/dev/serial/by-id", f"usb-Quectel_RM500Q-GL_{ser1}-if00-port0")
     ser2 = os.path.join("/dev/serial/by-id", f"usb-Quectel_RM500Q-GL_{ser2}-if00-port0")
 
+    # makedir if not exist
+    if not os.path.exists("/home/wmnlab/Data/mobileinsight"):
+        # if the demo_folder directory is not present 
+        # then create it.
+        os.makedirs("/home/wmnlab/Data/mobileinsight")
+
     # Initialize online monitors
     src1 = OnlineMonitor()
     src1.set_serial_port(ser1)  # the serial port to collect the traces
     src1.set_baudrate(baudrate)  # the baudrate of the port
+    src1.save_log_as(savepath)
 
     src2 = OnlineMonitor()
     src2.set_serial_port(ser2)  # the serial port to collect the traces
     src2.set_baudrate(baudrate)  # the baudrate of the port
+    src2.save_log_as(savepath)
 
     # Set analyzer
     myanalyzer1 = MyAnalyzer()
@@ -107,13 +115,3 @@ if __name__ == "__main__":
         myanalyzer2.reset()
         time.sleep(1)
         
-
-    # classifier = torch.load('model/best_model_loss.pt')
-    # classifier.eval()
-    
-    # x = torch.rand(15, 38)
-    # x = torch.unsqueeze(x, dim=0)
-    # y = classifier(x)
-
-    # print(y.item())
-    # print('successful!')
