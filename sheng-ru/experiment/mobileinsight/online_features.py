@@ -33,17 +33,15 @@ def get_tensor_input():
 # Query modem current band setting
 def query_band(dev):
 
-    oldpwd = os.getcwd()
-    os.chdir("../../../modem-utilities/")
     out = subprocess.check_output(f'./band-setting.sh -i {dev}', shell=True)
     out = out.decode('utf-8')
     inds = [m.start() for m in re.finditer("lte_band", out)]
     inds2 = [m.start() for m in re.finditer("\r", out)]
     result = out[inds[1]+len('"lte_band"'):inds2[2]]
-    os.chdir(oldpwd)
+
     return 'B'+result
 
-#
+# get ecperiment time
 def get_current_tp(x):
 
     for i, time_point in enumerate(tps):
@@ -55,6 +53,13 @@ def get_current_tp(x):
             y = 9
 
     return y
+
+# Change band function
+def change_band(dev, band):
+    original = query_band(dev)
+    subprocess.Popen([f'./band-setting.sh -i {dev} -l {band}'], shell=True)
+    new = query_band(dev)
+    print(f"Change {dev} from {original} to {new}.")
 
 if __name__ == "__main__":
     
@@ -159,6 +164,7 @@ if __name__ == "__main__":
         else:
             start = False
 
+
         if count < time_seq:
             print(f'{time_seq-count} more second...')
         else:
@@ -167,6 +173,9 @@ if __name__ == "__main__":
     t_s = threading.Thread(target=start_inference, daemon=True)
     t_s.start()
 
+    # cd modem-utilities to run code
+    os.chdir("../../../modem-utilities/")
+    
     # Main Process
     try:
 
@@ -193,8 +202,10 @@ if __name__ == "__main__":
                 A, B = AB[0], AB[1]
                 current_settings = A+'&'+B
                 tp_now = get_current_tp(count)
-                print(database[current_settings].iloc[tp_now])
+                print(current_settings)
 
+                # print(database[current_settings].iloc[tp_now])
+                
                 x_in = x_in[:-1]
                 
             count += 1
