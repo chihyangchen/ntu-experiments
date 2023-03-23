@@ -1,7 +1,8 @@
 import sys
 import os
 
-os.chdir(os.path.dirname(sys.argv[0]))
+if os.path.dirname(sys.argv[0]) != '':
+    os.chdir(os.path.dirname(sys.argv[0]))
 
 if os.path.isdir(sys.argv[1]):
 
