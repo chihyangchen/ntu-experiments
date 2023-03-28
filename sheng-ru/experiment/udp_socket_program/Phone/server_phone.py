@@ -108,7 +108,6 @@ def receive(s, dev, port):
         try:
             #receive data, update client's addresses (after receiving, server know where to transmit)
             indata, addr = s.recvfrom(1024)
-            # udp_addr[s] = addr 
 
             try: start_time
             except NameError:
