@@ -8,7 +8,6 @@ Devise your own analyzer
 from .analyzer import *
 
 import datetime as dt
-from datetime import datetime
 from collections import namedtuple
 import copy
 
@@ -55,7 +54,7 @@ class MyAnalyzer(Analyzer):
 
         self.featuredict = {
             'LTE_HO': 0, 'MN_HO': 0, 'SN_setup': 0, 'SN_Rel': 0, 'SN_HO': 0, 'RLF': 0, 'SCG_RLF': 0,
-            'RSRP': 0, 'RSRQ': 0, 'RSRP1': 0, 'RSRQ1': 0, 'RSRP2': 0, 'RSRQ2': 0, 
+            'num_of_neis': 0,'RSRP': 0, 'RSRQ': 0, 'RSRP1': 0, 'RSRQ1': 0, 'RSRP2': 0, 'RSRQ2': 0, 
             'nr-RSRP': 0, 'nr-RSRQ': 0, 'nr-RSRP1': 0, 'nr-RSRQ1': 0, 'nr-RSRP2': 0, 'nr-RSRQ2':0
         }
         self.timepoint = dt.datetime.now().replace(microsecond=0)
@@ -103,6 +102,7 @@ class MyAnalyzer(Analyzer):
         self.init_rrc_dict()
         for key in self.featuredict:
             self.featuredict[key] = 0
+            
     def get_featuredict(self):
         return self.featuredict
         
@@ -127,6 +127,9 @@ class MyAnalyzer(Analyzer):
 
     # Give featuredict lte signal strength imformation from ss_dict accumulated for one seconds
     def ss_dict_to_featuredict(self): 
+
+        num_of_nei = len(self.SS_DICT.dict) - 1
+        self.featuredict['num_of_neis'], self.features_buffer['num_of_neis'] = num_of_nei, num_of_nei
 
          # Get primary serv cell rsrp, rsrq 
         if len(self.SS_DICT.dict["PCell"][0]) != 0:
