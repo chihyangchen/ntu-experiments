@@ -12,7 +12,7 @@ import json
 import re
 import pandas as pd
 import torch
-from model.model import RNN_Classifier, RNN_Forecaster
+from model.model import RNN_Forecaster
 
 # Import MobileInsight modules
 from mobile_insight.analyzer import *
@@ -127,8 +127,8 @@ if __name__ == "__main__":
     count = 0
     x_in = torch.FloatTensor([])
 
-    classifier = torch.load('model/best_model_loss.pt')
-    classifier.eval()
+    forecaster = torch.load('model/preformance_predict.pt', map_location=torch.device('cpu'))
+    forecaster.eval()
 
     # Record log
     now = dt.datetime.today()
@@ -136,11 +136,11 @@ if __name__ == "__main__":
     save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f'{t}.csv')
     f_out = open(save_path, 'w')
     f_out.write(','.join(['LTE_HO, MN_HO', 'SN_setup', 'SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
-                          'RSRP', 'RSRQ', 'RSRP1', 'RSRQ1', 'RSRP2', 'RSRQ2',
+                          'num_of-neis', 'RSRP', 'RSRQ', 'RSRP1', 'RSRQ1', 'RSRP2', 'RSRQ2',
                           'nr-RSRP', 'nr-RSRQ', 'nr-RSRP1', 'nr-RSRQ1', 'nr-RSRP2', 'nr-RSRQ2']*2)+',out\n')
 
     # For cleaning features before experiment
-    time_seq = 15
+    time_seq = 30
     print(f"Fill up time series data first. Please wait for about {time_seq} second.")
     time.sleep(1) # Clean time
     myanalyzer1.reset()
@@ -195,7 +195,7 @@ if __name__ == "__main__":
             else:
                 
                 x_in = torch.cat((x_in, torch.unsqueeze(x, dim=0)), dim=0)
-                out = classifier(x_in.unsqueeze(dim=0)).item()
+                out = forecaster(x_in.unsqueeze(dim=0)).detach().numpy()
                 y = [str(a) for a in torch.Tensor.tolist(x)]
                 f_out.write(','.join(y) + f',{out}'+',\n')
                 print(out)
