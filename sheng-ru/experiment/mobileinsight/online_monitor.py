@@ -74,6 +74,9 @@ if __name__ == "__main__":
     while True:
         # print(myanalyzer.RRC_DICT)
         myanalyzer.to_featuredict()
-        print(myanalyzer.get_featuredict())
+        S = myanalyzer.get_featuredict()
+        print('=====================================')
+        for k in S:
+            print(k, ':', S[k])
         myanalyzer.reset()
         time.sleep(1)

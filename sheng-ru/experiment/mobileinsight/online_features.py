@@ -12,7 +12,7 @@ import json
 import re
 import pandas as pd
 import torch
-from model.model import RNN_Classifier
+from model.model import RNN_Classifier, RNN_Forecaster
 
 # Import MobileInsight modules
 from mobile_insight.analyzer import *
@@ -187,10 +187,13 @@ if __name__ == "__main__":
             x = get_tensor_input()
 
             if count < time_seq-1 or not start:
+                
                 x_in = torch.cat((x_in, torch.unsqueeze(x, dim=0)), dim=0)
                 y = [str(a) for a in torch.Tensor.tolist(x)]
                 f_out.write(','.join(y) + '\n')
+            
             else:
+                
                 x_in = torch.cat((x_in, torch.unsqueeze(x, dim=0)), dim=0)
                 out = classifier(x_in.unsqueeze(dim=0)).item()
                 y = [str(a) for a in torch.Tensor.tolist(x)]
@@ -198,11 +201,11 @@ if __name__ == "__main__":
                 print(out)
 
                 # if out > 0.5:
-                AB = sorted([query_band(dev1), query_band(dev2)])
-                A, B = AB[0], AB[1]
-                current_settings = A+'&'+B
-                tp_now = get_current_tp(count)
-                print(current_settings)
+                # AB = sorted([query_band(dev1), query_band(dev2)])
+                # A, B = AB[0], AB[1]
+                # current_settings = A+'&'+B
+                # tp_now = get_current_tp(count)
+                # print(current_settings)
 
                 # print(database[current_settings].iloc[tp_now])
                 
