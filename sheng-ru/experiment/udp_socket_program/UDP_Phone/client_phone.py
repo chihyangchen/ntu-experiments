@@ -70,7 +70,7 @@ total_time = args.time
 #=================global variables=======================
 
 for device, port, serial in zip(devices, ports, serials):
-    su_cmd = 'cd sdcard/UDP_Socket_Programming && python3 udp_socket_phone.py ' + \
+    su_cmd = 'cd sdcard/UDP_Phone && python3 udp_socket_phone.py ' + \
             f'-H {HOST} -d {device} -p {port[0]} {port[1]} -b {bitrate} -l {length} -t {total_time}'
     adb_cmd = f"su -c '{su_cmd}'"
     p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)

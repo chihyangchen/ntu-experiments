@@ -177,7 +177,9 @@ now = dt.datetime.today()
 n = [str(x) for x in [now.year, now.month, now.day, now.hour, now.minute, now.second]]
 n = [x.zfill(2) for x in n]  # zero-padding to two digit
 n = '-'.join(n[:3]) + '_' + '-'.join(n[3:])
-pcap_path = '/sdcard/UDP_Socket_Programming/pcapdir/'
+pcap_path = '/sdcard/UDP_Phone/pcapdir/'
+if not os.path.isdir(pcap_path):
+   os.system(f'mkdir {pcap_path}') 
 
 
 pcap = os.path.join(pcap_path, f"client_pcap_BL_{dev}_{ports[0]}_{ports[1]}_{n}_sock.pcap")
