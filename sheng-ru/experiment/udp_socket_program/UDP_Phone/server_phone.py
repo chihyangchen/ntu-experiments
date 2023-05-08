@@ -199,19 +199,19 @@ for t in t_fills:
     t.join()
 print('Successful get udp addr!')
 
-# # Start subprocess of tcpdump
-# now = dt.datetime.today()
-# n = [str(x) for x in [now.year, now.month, now.day, now.hour, now.minute, now.second]]
-# n = [x.zfill(2) for x in n]  # zero-padding to two digit
-# n = '-'.join(n[:3]) + '_' + '-'.join(n[3:])
-# pcap_path = '/home/wmnlab/temp'
+# Start subprocess of tcpdump
+now = dt.datetime.today()
+n = [str(x) for x in [now.year, now.month, now.day, now.hour, now.minute, now.second]]
+n = [x.zfill(2) for x in n]  # zero-padding to two digit
+n = '-'.join(n[:3]) + '_' + '-'.join(n[3:])
+pcap_path = '/home/wmnlab/temp'
 
-# tcpproc_list = []
-# for device, port in zip(devices, ports):
-#     pcap = os.path.join(pcap_path, f"server_pcap_BL_{device}_{port[0]}_{port[1]}_{n}_sock.pcap")
-#     tcpproc =  subprocess.Popen([f"sudo tcpdump -i any port '({port[0]} or {port[1]})' -w {pcap}"], shell=True, preexec_fn = os.setpgrp)
-#     tcpproc_list.append(tcpproc)    
-# time.sleep(1)
+tcpproc_list = []
+for device, port in zip(devices, ports):
+    pcap = os.path.join(pcap_path, f"server_pcap_BL_{device}_{port[0]}_{port[1]}_{n}_sock.pcap")
+    tcpproc =  subprocess.Popen([f"sudo tcpdump -i any port '({port[0]} or {port[1]})' -w {pcap}"], shell=True, preexec_fn = os.setpgrp)
+    tcpproc_list.append(tcpproc)    
+time.sleep(1)
 
 # Create and start UL receive multi-thread
 
@@ -242,11 +242,11 @@ except KeyboardInterrupt:
     p_tx.terminate()
     time.sleep(1)
 
-    # # Kill tcpdump process
-    # print('Killing tcpdump process...')
-    # for tcpproc in tcpproc_list:
-    #     os.killpg(os.getpgid(tcpproc.pid), signal.SIGTERM)
+    # Kill tcpdump process
+    print('Killing tcpdump process...')
+    for tcpproc in tcpproc_list:
+        os.killpg(os.getpgid(tcpproc.pid), signal.SIGTERM)
     
-    # time.sleep(3)
+    time.sleep(3)
     print('Successfully closed.')
     sys.exit()
