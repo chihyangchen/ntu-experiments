@@ -2,7 +2,7 @@
 
 import socket
 import time
-import multiprocessing
+import threading
 import datetime as dt
 import os
 import sys
@@ -188,12 +188,12 @@ tcpproc = subprocess.Popen([f"tcpdump -i any port '({ports[0]} or {ports[1]})' -
 time.sleep(1)
 
 # Create and start DL receive multipleprocess
-p_rx = multiprocessing.Process(target=receive, args=(rx_socket, dev, ), daemon=True)
-p_rx.start()
+t_rx = threading.Thread(target=receive, args=(rx_socket, dev, ), daemon=True)
+t_rx.start()
 
 # Create and start UL transmission multiprocess
-p_tx = multiprocessing.Process(target=transmit, args=(tx_socket,), daemon=True)
-p_tx.start()
+t_tx = threading.Thread(target=transmit, args=(tx_socket,), daemon=True)
+t_tx.start()
 
 # Main Process waitng...
 try:
@@ -202,12 +202,6 @@ try:
         time.sleep(10)
 
 except KeyboardInterrupt:
-
-    # Kill multipleprocess
-    p_tx.terminate()
-    time.sleep(.5)
-    p_rx.terminate()
-    time.sleep(.5)
 
     # Kill tcpdump process
     print('Killing tcpdump process...')
