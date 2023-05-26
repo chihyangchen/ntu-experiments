@@ -274,6 +274,12 @@ for fname in filenames:
         "dl-CarrierFreq-r10",
         ###########################
 
+        ## ueCapabilityInformation
+        "ueCapabilityInformation",
+        "SupportedBandEUTRA",
+        "bandEUTRA",
+        ###########################
+
         ])+'\n')
 
     #For each dm_log_packet, we will check that whether strings in type_list are shown in it.
@@ -382,6 +388,12 @@ for fname in filenames:
         "sCellIndex-r10",
         "physCellId-r10",
         "dl-CarrierFreq-r10",
+        ###########################
+
+        ## ueCapabilityInformation
+        "\"ueCapabilityInformation\"",
+        "\"SupportedBandEUTRA\"",
+        "bandEUTRA",
         ###########################
 
         ]
@@ -632,7 +644,13 @@ for fname in filenames:
                                 type_code[c] = 'nr or cqi report'
                                 c += 1
                             next = 3
-                        elif type in l and type not in ["physCellId", "measObjectId", "measObject", "reportConfigId", "measId","carrierFreq"]:
+                        elif type in l and type == "\"SupportedBandEUTRA\"":
+                            type_code[c] = "1"
+                            c += 1
+                            l = passlines(1, f)
+                            multi_output_write(type_code, c, "bandEUTRA", l)
+                            next = 1
+                        elif type in l and type not in ["physCellId", "measObjectId", "measObject", "reportConfigId", "measId","carrierFreq","bandEUTRA"]:
                             type_code[c] = "1"
                             
                         c += 1

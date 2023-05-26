@@ -41,7 +41,7 @@ def query_band(dev):
 
     return 'B'+result
 
-# get ecperiment time
+# get experiment time
 def get_current_tp(x):
 
     for i, time_point in enumerate(tps):
