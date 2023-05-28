@@ -60,12 +60,35 @@ selected_features = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SC
                      'num_of_neis','RSRP', 'RSRQ', 'RSRP1','RSRQ1',
                      'nr-RSRP', 'nr-RSRQ', 'nr-RSRP1','nr-RSRQ1']
 
+HOs = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF']
+
 def get_array_features(analyzer):
 
     features = analyzer.get_featuredict()
     features = {k: v for k, v in features.items() if k in selected_features}
 
     return np.array(list(features.values()))
+
+def show_HO(analyzer):
+
+    features = analyzer.get_featuredict()
+    features = {k: v for k, v in features.items() if k in HOs}
+    
+    for k, v in features.items():
+        if v == 1:
+            print(f'HO {k} happened!!!!!')
+
+def show_predictions(predictions):
+
+    thr = 0.5
+    if predictions[0] > thr:
+        print(f'Prediciotn: {predictions[2]} remaining LTE Ho happen!!!')
+    if predictions[1] > thr:
+        print(f'Prediciotn: {predictions[3]} remaining LTE Ho happen!!!')
+    if predictions[4] > thr:
+        print(f'Prediciotn: Near NR setup!!!')
+    if predictions[5] > thr:
+        print(f'Prediciotn: Near RLF!!!')
 
 def Action():
 
@@ -116,9 +139,10 @@ if __name__ == "__main__":
     myanalyzer = MyAnalyzer()
     myanalyzer.set_source(src)
 
+    save_path1 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev}_{t}.mi2log")
+    src.save_log_as(save_path1)
+
     def run_src():
-        # save_path1 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev1}_{t}.txt")
-        # src1.save_log_as(save_path1)
         src.run()
 
     t_src = threading.Thread(target=run_src, daemon=True)
@@ -146,7 +170,8 @@ if __name__ == "__main__":
                 if count == 1: x_in = features
                 else: x_in = np.concatenate((x_in, features), axis=0)
 
-                print(count, x_in.shape)
+                print(f'{20-count} second after start...')
+                # print(count, x_in.shape)
                 count += 1
 
                 # record
@@ -162,8 +187,9 @@ if __name__ == "__main__":
 
                 ############ Action Here ##############
 
-                print(x_in.shape, out)
-                Action()
+                show_predictions(out)
+
+                # Action()
 
                 #######################################
 
@@ -171,13 +197,13 @@ if __name__ == "__main__":
                 w = [str(e) for e in list(features)+out]
                 f_out.write(','.join(w) + ',\n')
 
+            show_HO(myanalyzer)
+
             myanalyzer.reset()
 
             end = time.time()
             time.sleep(1-(end-start))
             end2 = time.time()
-            
-            # print(end2-start)
 
     except KeyboardInterrupt:
         

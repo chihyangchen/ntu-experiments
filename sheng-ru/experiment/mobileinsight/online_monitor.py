@@ -45,15 +45,15 @@ if __name__ == "__main__":
     # src.enable_log("5G_NR_RRC_OTA_Packet")
     # src.enable_log("LTE_RRC_OTA_Packet")
     # src.enable_log("WCDMA_RRC_OTA_Packet")
-    src.enable_log("5G_NR_PDCP_UL_Control_Pdu")
-    src.enable_log("5G_NR_L2_UL_TB")
-    src.enable_log("5G_NR_L2_UL_BSR")
-    src.enable_log("5G_NR_RLC_DL_Stats")
-    src.enable_log("5G_NR_MAC_UL_TB_Stats")
-    src.enable_log("5G_NR_MAC_UL_Physical_Channel_Schedule_Report")
-    src.enable_log("5G_NR_MAC_PDSCH_Stats")
-    src.enable_log("5G_NR_MAC_RACH_Trigger")
-
+    # src.enable_log("5G_NR_PDCP_UL_Control_Pdu")
+    # src.enable_log("5G_NR_L2_UL_TB")
+    # src.enable_log("5G_NR_L2_UL_BSR")
+    # src.enable_log("5G_NR_RLC_DL_Stats")
+    # src.enable_log("5G_NR_MAC_UL_TB_Stats")
+    # src.enable_log("5G_NR_MAC_UL_Physical_Channel_Schedule_Report")
+    # src.enable_log("5G_NR_MAC_PDSCH_Stats")
+    # src.enable_log("5G_NR_MAC_RACH_Trigger")
+    src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
 
     # Myanalyzer
     # myanalyzer = MyAnalyzer()
@@ -72,8 +72,8 @@ if __name__ == "__main__":
     wcdma_rrc_analyzer.set_source(src)  # bind with the monitor
 
     # 4G Nas analyzer
-    lte_nas_analyzer = LteNasAnalyzer()
-    lte_nas_analyzer.set_source(src)
+    # lte_nas_analyzer = LteNasAnalyzer()
+    # lte_nas_analyzer.set_source(src)
 
     # 4G Phy analyzer
     # lte_phy_analyzer = LtePhyAnalyzer()
@@ -84,13 +84,18 @@ if __name__ == "__main__":
     # lte_rlc_analyzer.set_source(src)
 
     # 4G Mac analyzer
-    lte_mac_analyzer = LteMacAnalyzer()
-    lte_mac_analyzer.set_source(src)
+    # lte_mac_analyzer = LteMacAnalyzer()
+    # lte_mac_analyzer.set_source(src)
 
     # 4G Pdcp analyzer
-    lte_pdcp_analyzer = LtePdcpAnalyzer()
-    lte_pdcp_analyzer.set_source(src)
+    # lte_pdcp_analyzer = LtePdcpAnalyzer()
+    # lte_pdcp_analyzer.set_source(src)
 
+    # Dump the messages to std I/O. Comment it if it is not needed.
+    dumper = MsgLogger()
+    dumper.set_source(src)
+    dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
+    
     # Start the monitoring
     src.run()
 
