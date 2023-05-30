@@ -16,9 +16,14 @@ class MyAnalyzer(Analyzer):
     An self-defined analyzer
     """
 
-    def __init__(self):
+    def __init__(self, save_path=''):
 
         Analyzer.__init__(self)
+
+        # save log
+        self.save_path = save_path
+        if self.save_path:
+            self.f = open(save_path, 'w')
 
         # init packet filters
         self.add_source_callback(self.ue_event_filter)
@@ -88,8 +93,12 @@ class MyAnalyzer(Analyzer):
         self.signal_strength(msg)
         self.nr_signal_strength(msg)
         self.ho_events(msg)
- 
+        self.record_msg(msg)
+
     # Unified function
+    def record_msg(self, msg):
+        if self.save_path:
+            print(msg.data.decode(), file = self.f)
 
     def to_featuredict(self):
         self.ss_dict_to_featuredict()

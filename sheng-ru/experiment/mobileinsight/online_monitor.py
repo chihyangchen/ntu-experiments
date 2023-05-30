@@ -60,16 +60,16 @@ if __name__ == "__main__":
     # myanalyzer.set_source(src)
 
     # 5G NR RRC analyzer
-    nr_rrc_analyzer = NrRrcAnalyzer()
-    nr_rrc_analyzer.set_source(src)  # bind with the monitor
+    # nr_rrc_analyzer = NrRrcAnalyzer()
+    # nr_rrc_analyzer.set_source(src)  # bind with the monitor
 
     # 4G RRC analyzer
-    lte_rrc_analyzer = LteRrcAnalyzer()
-    lte_rrc_analyzer.set_source(src)  # bind with the monitor
+    # lte_rrc_analyzer = LteRrcAnalyzer()
+    # lte_rrc_analyzer.set_source(src)  # bind with the monitor
 
     # 3G RRC analyzer
-    wcdma_rrc_analyzer = WcdmaRrcAnalyzer()
-    wcdma_rrc_analyzer.set_source(src)  # bind with the monitor
+    # wcdma_rrc_analyzer = WcdmaRrcAnalyzer()
+    # wcdma_rrc_analyzer.set_source(src)  # bind with the monitor
 
     # 4G Nas analyzer
     # lte_nas_analyzer = LteNasAnalyzer()
@@ -92,10 +92,15 @@ if __name__ == "__main__":
     # lte_pdcp_analyzer.set_source(src)
 
     # Dump the messages to std I/O. Comment it if it is not needed.
-    dumper = MsgLogger()
-    dumper.set_source(src)
-    dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
+    # dumper = MsgLogger()
+    # dumper.set_source(src)
+    # dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
     
+    # self defined analyzer
+    # save_path = '/home/wmnlab/test.csv'
+    # myanalyzer = MyAnalyzer(save_path)
+    # myanalyzer.set_source(src)
+
     # Start the monitoring
     src.run()
 

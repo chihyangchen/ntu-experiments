@@ -155,7 +155,6 @@ if __name__ == "__main__":
     time_seq = 20
     count = 1
 
-
     try:
 
         while True:
@@ -203,7 +202,6 @@ if __name__ == "__main__":
 
             end = time.time()
             time.sleep(1-(end-start))
-            end2 = time.time()
 
     except KeyboardInterrupt:
         
