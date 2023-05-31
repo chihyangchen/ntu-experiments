@@ -45,16 +45,17 @@ class Predicter():
 
     def foward(self, x_in):
 
+        names = ['LTE_HO', 'NR_HO', 'LTE_HO_time', 'NR_HO_time', 'NR_Setup', 'RLF']
         o1 = self.lte_clssifier.predict(x_in)
         o2 = self.nr_clssifier.predict(x_in)
         o3 = self.lte_forecaster.predict(x_in)
         o4 = self.nr_forecaster.predict(x_in)
         o5 = self.setup_clssifier.predict(x_in)
         o6 = self.rlf_clssifier.predict(x_in)
-
+        
         out = [o1,o2,o3,o4,o5,o6]
-        out = [o.item() for o in out]
-
+        out = {k: v.item() for k, v in zip(names, out)}
+        
         return out
 
 selected_features = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
@@ -76,16 +77,16 @@ def query_band(dev):
     inds = [m.start() for m in re.finditer("lte_band", out)]
     inds2 = [m.start() for m in re.finditer("\r", out)]
     result = out[inds[1]+len('"lte_band"'):inds2[2]]
+    print(f'Current Band Setting of {dev} is {result}')
 
-    return 'B'+result
+    return result
 
 # Change band function
 def change_band(dev, band):
     original = query_band(dev)
     subprocess.Popen([f'./band-setting.sh -i {dev} -l {band}'], shell=True)
-    new = query_band(dev)
-    print(f"Change {dev} from {original} to {new}.")
-
+    # new = query_band(dev)
+    print(f"Change {dev} from {original} to {band}.")
 
 # show
 HOs = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF']
@@ -102,33 +103,41 @@ def show_HO(analyzer):
 def show_predictions(predictions):
 
     thr = 0.5
-    if predictions[0] > thr:
-        print(f'Prediciotn: {predictions[2]} remaining LTE Ho happen!!!')
-    if predictions[1] > thr:
-        print(f'Prediciotn: {predictions[3]} remaining LTE Ho happen!!!')
-    if predictions[4] > thr:
+    if predictions['LTE_HO'] > thr:
+        v = predictions['LTE_HO_time']
+        print(f'Prediciotn: {v} remaining LTE Ho happen!!!')
+    if predictions['NR_HO'] > thr:
+        v = predictions['NR_HO_time']
+        print(f'Prediciotn: {v} remaining LTE Ho happen!!!')
+    if predictions['NR_Setup'] > thr:
         print(f'Prediciotn: Near NR setup!!!')
-    if predictions[5] > thr:
+    if predictions['RLF'] > thr:
         print(f'Prediciotn: Near RLF!!!')
 
 
-# get experiment time
-def get_current_tp(x):
-
-    for i, time_point in enumerate(tps):
-        if x < time_point:
-            y = i
-            break
-        try: y
-        except:
-            y = 9
-
-    return y
-
 # Design Action here!!
-def Action():
+def Action(preds1, preds2):
 
-    pass
+    thr = 0.5
+    # RLF + HO
+    def action1():
+
+        if (preds1['RLF'] > thr) and ( (preds2['LTE_HO'] > 0.5) and (preds2['LTE_HO_time'] <3)):
+            change_band(dev1, )
+        elif (preds2['RLF'] > thr) and ( (preds1['LTE_HO'] > 0.5) and (preds1['LTE_HO_time'] <3)):
+            change_band(dev2, )
+            pass
+
+    # HO + HO
+    def action2():
+
+        pass
+
+    # actions running
+    #=================
+    action1()
+    action2()
+
 
 if __name__ == "__main__":
     
@@ -270,7 +279,7 @@ if __name__ == "__main__":
 
                 # show_predictions(out1)
                 # show_predictions(out2)
-                # Action()
+                # Action(out1, out2)
 
                 #######################################
 

@@ -1,3 +1,3 @@
-[/dev/cdc-wdm0] Client ID not released:
+[/dev/cdc-wdm2] Client ID not released:
 	Service: 'wds'
-	    CID: '3'
+	    CID: '16'

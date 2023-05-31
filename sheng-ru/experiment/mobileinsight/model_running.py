@@ -11,6 +11,7 @@ import json
 # import pandas as pd
 import numpy as np
 import datetime as dt
+import re
 
 # Machine Learning Model
 import xgboost as xgb
@@ -44,16 +45,17 @@ class Predicter():
 
     def foward(self, x_in):
 
+        names = ['LTE_HO', 'NR_HO', 'LTE_HO_time', 'NR_HO_time', 'NR_Setup', 'RLF']
         o1 = self.lte_clssifier.predict(x_in)
         o2 = self.nr_clssifier.predict(x_in)
         o3 = self.lte_forecaster.predict(x_in)
         o4 = self.nr_forecaster.predict(x_in)
         o5 = self.setup_clssifier.predict(x_in)
         o6 = self.rlf_clssifier.predict(x_in)
-
+        
         out = [o1,o2,o3,o4,o5,o6]
-        out = [o.item() for o in out]
-
+        out = {k: v.item() for k, v in zip(names, out)}
+        
         return out
 
 selected_features = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
@@ -78,16 +80,37 @@ def show_HO(analyzer):
         if v == 1:
             print(f'HO {k} happened!!!!!')
 
+# Query modem current band setting
+def query_band(dev):
+
+    out = subprocess.check_output(f'./band-setting.sh -i {dev}', shell=True)
+    out = out.decode('utf-8')
+    inds = [m.start() for m in re.finditer("lte_band", out)]
+    inds2 = [m.start() for m in re.finditer("\r", out)]
+    result = out[inds[1]+len('"lte_band"'):inds2[2]]
+    print(f'Current Band Setting of {dev} is {result}')
+
+    return result
+
+# Change band function
+def change_band(dev, band):
+    original = query_band(dev)
+    subprocess.Popen([f'./band-setting.sh -i {dev} -l {band}'], shell=True)
+    # new = query_band(dev)
+    print(f"Change {dev} from {original} to {band}.")
+
 def show_predictions(predictions):
 
     thr = 0.5
-    if predictions[0] > thr:
-        print(f'Prediciotn: {predictions[2]} remaining LTE Ho happen!!!')
-    if predictions[1] > thr:
-        print(f'Prediciotn: {predictions[3]} remaining LTE Ho happen!!!')
-    if predictions[4] > thr:
+    if predictions['LTE_HO'] > thr:
+        v = predictions['LTE_HO_time']
+        print(f'Prediciotn: {v} remaining LTE Ho happen!!!')
+    if predictions['NR_HO'] > thr:
+        v = predictions['NR_HO_time']
+        print(f'Prediciotn: {v} remaining LTE Ho happen!!!')
+    if predictions['NR_Setup'] > thr:
         print(f'Prediciotn: Near NR setup!!!')
-    if predictions[5] > thr:
+    if predictions['RLF'] > thr:
         print(f'Prediciotn: Near RLF!!!')
 
 def Action():
@@ -155,6 +178,9 @@ if __name__ == "__main__":
     time_seq = 20
     count = 1
 
+    # cd modem-utilities to run code
+    os.chdir("../../../modem-utilities/")
+
     try:
 
         while True:
@@ -187,7 +213,6 @@ if __name__ == "__main__":
                 ############ Action Here ##############
 
                 show_predictions(out)
-
                 # Action()
 
                 #######################################

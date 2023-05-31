@@ -1,12 +1,12 @@
-[/dev/cdc-wdm0] Current settings retrieved:
+[/dev/cdc-wdm2] Current settings retrieved:
            IP Family: IPv4
-        IPv4 address: 25.117.138.14
+        IPv4 address: 10.192.230.41
     IPv4 subnet mask: 255.255.255.252
-IPv4 gateway address: 25.117.138.13
+IPv4 gateway address: 10.192.230.42
     IPv4 primary DNS: 168.95.1.1
   IPv4 secondary DNS: 168.95.192.1
                  MTU: 1500
              Domains: none
-[/dev/cdc-wdm0] Client ID not released:
+[/dev/cdc-wdm2] Client ID not released:
 	Service: 'wds'
-	    CID: '3'
+	    CID: '16'
