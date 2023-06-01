@@ -42,8 +42,8 @@ if __name__ == "__main__":
     # src.enable_log_all()
 
     # Enable 3G/4G/5G RRC (radio resource control) monitoring
-    # src.enable_log("5G_NR_RRC_OTA_Packet")
-    # src.enable_log("LTE_RRC_OTA_Packet")
+    src.enable_log("5G_NR_RRC_OTA_Packet")
+    src.enable_log("LTE_RRC_OTA_Packet")
     # src.enable_log("WCDMA_RRC_OTA_Packet")
     # src.enable_log("5G_NR_PDCP_UL_Control_Pdu")
     # src.enable_log("5G_NR_L2_UL_TB")
@@ -53,6 +53,7 @@ if __name__ == "__main__":
     # src.enable_log("5G_NR_MAC_UL_Physical_Channel_Schedule_Report")
     # src.enable_log("5G_NR_MAC_PDSCH_Stats")
     # src.enable_log("5G_NR_MAC_RACH_Trigger")
+    src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
     src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
 
     # Myanalyzer
@@ -92,9 +93,9 @@ if __name__ == "__main__":
     # lte_pdcp_analyzer.set_source(src)
 
     # Dump the messages to std I/O. Comment it if it is not needed.
-    # dumper = MsgLogger()
-    # dumper.set_source(src)
-    # dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
+    dumper = MsgLogger()
+    dumper.set_source(src)
+    dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
     
     # self defined analyzer
     # save_path = '/home/wmnlab/test.csv'
