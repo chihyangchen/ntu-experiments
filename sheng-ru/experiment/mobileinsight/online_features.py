@@ -217,11 +217,11 @@ if __name__ == "__main__":
     src2.set_baudrate(baudrate)  # the baudrate of the port
 
     # Set analyzer
-    save_path1 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev1}_{t}.txt")
+    save_path1 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_dict_{dev1}_{t}.txt")
     myanalyzer1 = MyAnalyzer(save_path1)
     myanalyzer1.set_source(src1)
     
-    save_path2 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev2}_{t}.txt")
+    save_path2 = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_dict_{dev2}_{t}.txt")
     myanalyzer2 = MyAnalyzer(save_path2)
     myanalyzer2.set_source(src2)
     
