@@ -10,8 +10,9 @@ import datetime as dt
 import argparse
 import json
 import re
-import pandas as pd
+# import pandas as pd
 import numpy as np
+import random
 
 # Machine Learning Model
 import xgboost as xgb
@@ -91,14 +92,14 @@ def change_band(dev, band):
 # show
 HOs = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF']
 
-def show_HO(analyzer):
+def show_HO(dev, analyzer):
 
     features = analyzer.get_featuredict()
     features = {k: v for k, v in features.items() if k in HOs}
     
     for k, v in features.items():
         if v == 1:
-            print(f'HO {k} happened!!!!!')
+            print(f'{dev} HO {k} happened!!!!!')
 
 def show_predictions(predictions):
 
@@ -119,25 +120,45 @@ def show_predictions(predictions):
 def Action(preds1, preds2):
 
     thr = 0.5
+    choices = ['3:7', '7:8', "3:8"]
+    choice = random.choice(choices)
+    
     # RLF + HO
     def action1():
+        
+        if (preds1['RLF'] > thr) and ( (preds2['LTE_HO'] > 0.5) and (preds2['LTE_HO_time'] < 5)):
+            change_band(dev1, '1:3:7:8')
+            print('action1 triggered')
+        elif (preds2['RLF'] > thr) and ( (preds1['LTE_HO'] > 0.5) and (preds1['LTE_HO_time'] < 5)):
+            change_band(dev2, choice)
+            print('action1 triggered')
+            
 
-        if (preds1['RLF'] > thr) and ( (preds2['LTE_HO'] > 0.5) and (preds2['LTE_HO_time'] <3)):
-            change_band(dev1, )
-        elif (preds2['RLF'] > thr) and ( (preds1['LTE_HO'] > 0.5) and (preds1['LTE_HO_time'] <3)):
-            change_band(dev2, )
-            pass
-
-    # HO + HO
+    # RLF + HO
     def action2():
+        
+        if (preds1['RLF'] > thr) and ( (preds2['NR_HO'] > 0.5) and (preds2['NR_HO_time'] < 5)):
+            change_band(dev1, '1:3:7:8')
+            print('action2 triggered')
+        elif (preds2['RLF'] > thr) and ( (preds1['NR_HO'] > 0.5) and (preds1['NR_HO_time'] < 5)):
+            change_band(dev2, choice)
+            print('action2 triggered')
+            
+    # RLF + HO setup
+    def action3():
 
-        pass
+        if (preds1['RLF'] > thr) and ( preds2['NR_Setup'] > 0.5) :
+            change_band(dev1, '1:3:7:8')
+            print('action3 triggered')
+        elif (preds2['RLF'] > thr) and ( preds2['NR_Setup'] > 0.5):
+            change_band(dev2, choice)
+            print('action3 triggered')
 
     # actions running
     #=================
     action1()
     action2()
-
+    action3()
 
 if __name__ == "__main__":
     
@@ -242,6 +263,9 @@ if __name__ == "__main__":
             features1 = get_array_features(myanalyzer1)
             features2 = get_array_features(myanalyzer2)
 
+            show_HO(dev1, myanalyzer1)
+            show_HO(dev2, myanalyzer2)
+            
             if count <= time_seq:
                 
                 if count == 1: 
@@ -279,12 +303,12 @@ if __name__ == "__main__":
 
                 # show_predictions(out1)
                 # show_predictions(out2)
-                # Action(out1, out2)
+                Action(out1, out2)
 
                 #######################################
 
                 # record
-                w = [str(e) for e in list(features1)+out1+list(features2)+out2]
+                w = [str(e) for e in list(features1) + list(out1.values()) + list(features2) + list(out2.values())]
                 f_out.write(','.join(w) + ',\n')
     
             myanalyzer1.reset()
