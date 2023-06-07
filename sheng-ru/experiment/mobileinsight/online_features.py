@@ -78,7 +78,7 @@ def query_band(dev):
     inds = [m.start() for m in re.finditer("lte_band", out)]
     inds2 = [m.start() for m in re.finditer("\r", out)]
     result = out[inds[1]+len('"lte_band"'):inds2[2]]
-    print(f'Current Band Setting of {dev} is {result}')
+    # print(f'Current Band Setting of {dev} is {result}')
 
     return result
 
@@ -115,50 +115,166 @@ def show_predictions(predictions):
     if predictions['RLF'] > thr:
         print(f'Prediciotn: Near RLF!!!')
 
+def happened_Events(preds1, preds2):
 
-# Design Action here!!
-def Action(preds1, preds2):
-
-    thr = 0.5
-    choices = ['3:7', '7:8', "3:8"]
-    choice = random.choice(choices)
+    evt1 = {'LTE_HO': None, 'NR_HO': None, 'NR_Setup': None, 'RLF': None}
+    evt2 = {'LTE_HO': None, 'NR_HO': None, 'NR_Setup': None, 'RLF': None}
     
-    # RLF + HO
-    def action1():
+    thr = 0.5
+    
+    for preds, evt in zip([preds1, preds2], [evt1, evt2]):
         
-        if (preds1['RLF'] > thr) and ( (preds2['LTE_HO'] > 0.5) and (preds2['LTE_HO_time'] < 5)):
-            change_band(dev1, '1:3:7:8')
-            print('action1 triggered')
-        elif (preds2['RLF'] > thr) and ( (preds1['LTE_HO'] > 0.5) and (preds1['LTE_HO_time'] < 5)):
-            change_band(dev2, choice)
-            print('action1 triggered')
+        if preds['LTE_HO'] > thr:
+            evt['LTE_HO'] = preds['LTE_HO_time']
+            
+        if preds['NR_HO'] > thr:
+            evt['NR_HO'] = preds['NR_HO_time']
+        
+        if preds['NR_Setup'] > thr:
+            evt['NR_Setup'] = 2
+        
+        if preds['RLF'] > thr:
+            evt['RLF'] = 2    
+    
+    return evt1, evt2
+
+from collections import namedtuple
+import pandas as pd
+import matplotlib.pyplot as plt
+
+### Function
+def evaluate_plr(radio1, radio2, predict_time=10, spr=5000, show_fig=False):
+    
+    def heaviside(x, left, right):
+    
+        if x < left:
+            return 0
+        elif x > right:
+            return 0
+        else:
+            return 1
+
+    def poly_approx(x_list, type, center=0, mode='ul'):
+        
+        if center == None:
+            p = np.poly1d(0)
+            return p(x_list)
+        
+        if mode == 'ul':
+            _coef = list(coef_ul.loc[type])
+        else: # mode == 'dl'
+            _coef = list(coef_dl.loc[type])
+            
+        x_list = [x - center for x in x_list]
+        lower_bd = _coef[0]
+        upper_bd = _coef[1]
+        coef = _coef[2:]
+        p = np.poly1d(coef)
+        
+        return np.clip(p(x_list)*np.vectorize(heaviside)(x_list, lower_bd, upper_bd), a_min=0, a_max=100)
+    
+    OP = namedtuple('Output', 'ul, dl', defaults=(None, None))
+    
+    eval_plr = []
+    eval_plr1 = []
+    eval_plr2 = []
+    
+    x = [s/spr for s in list(range(1, predict_time * spr + 1))]
+    for mode in ['ul', 'dl']:
+        Y1 = []
+        Y2 = []
+        for tag in ['LTE_HO', 'NR_HO', 'RLF', 'NR_Setup']:
+            y1 = poly_approx(x, 'NR_HO', center=radio1[tag], mode=mode)
+            y2 = poly_approx(x, 'RLF', center=radio2[tag], mode=mode)
+            Y1.append(y1)
+            Y2.append(y2)
+        y1 = [s1+s2+s3+s4 if s1+s2+s3+s4 <= 100 else 100 for (s1, s2, s3, s4) in zip(Y1[0],Y1[1],Y1[2],Y1[3])]
+        y2 = [s1+s2+s3+s4 if s1+s2+s3+s4 <= 100 else 100 for (s1, s2, s3, s4) in zip(Y2[0],Y2[1],Y2[2],Y2[3])]
+        y = [s1*s2/100 for (s1, s2) in zip(y1, y2)]
+        eval_plr.append(round(np.mean(y), 2))
+        eval_plr1.append(round(np.mean(y1), 2))
+        eval_plr2.append(round(np.mean(y2), 2))
+
+        if show_fig:
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.plot(x, y, '-', c='tab:orange', lw=0.5)
+            ax.fill_between(x, y, color='tab:orange', alpha=0.3)
+            ax.set_xlabel('Time (sec)')
+            ax.set_ylabel('Evaluated PLR (%)')
+            if mode == 'ul':
+                ax.set_title('Uplink')
+            else:    
+                ax.set_title('Downlink')
+
+    return OP(eval_plr[0], eval_plr[1]), OP(eval_plr1[0], eval_plr1[1]), OP(eval_plr2[0], eval_plr2[1])
+
+
+def Action(eval_plr, eval_plr1, eval_plr2):
+
+    choices = {'3:7', '7:8', '3:8'}
+    setting1, setting2 = query_band(dev1), query_band(dev2)
+    choices1, choices2 = choices - set([setting1]), choices - set([setting2])
+    choice1, choice2 = random.sample(choices1, 1), random.sample(choices2, 1)
+    
+    dl_thr, ul_thr = 0.5, 0.1
+    
+    if (eval_plr.dl > dl_thr):
+        
+        if (eval_plr1.dl > eval_plr2.dl):
+            change_band(dev1, choice1)
+        else:
+            change_band(dev2, choice2)
+    
+    elif (eval_plr.ul > ul_thr):
+        
+        if (eval_plr1.ul > eval_plr2.ul):
+            change_band(dev1, choice1)
+        else:
+            change_band(dev2, choice2)
+
+# # Design Action here!!
+# def Action(preds1, preds2):
+
+#     thr = 0.5
+#     choices = ['3:7', '7:8', "3:8"]
+#     choice = random.choice(choices)
+    
+#     # RLF + HO
+#     def action1():
+        
+#         if (preds1['RLF'] > thr) and ( (preds2['LTE_HO'] > 0.5) and (preds2['LTE_HO_time'] < 5)):
+#             change_band(dev1, '1:3:7:8')
+#             print('action1 triggered')
+#         elif (preds2['RLF'] > thr) and ( (preds1['LTE_HO'] > 0.5) and (preds1['LTE_HO_time'] < 5)):
+#             change_band(dev2, choice)
+#             print('action1 triggered')
             
 
-    # RLF + HO
-    def action2():
+#     # RLF + HO
+#     def action2():
         
-        if (preds1['RLF'] > thr) and ( (preds2['NR_HO'] > 0.5) and (preds2['NR_HO_time'] < 5)):
-            change_band(dev1, '1:3:7:8')
-            print('action2 triggered')
-        elif (preds2['RLF'] > thr) and ( (preds1['NR_HO'] > 0.5) and (preds1['NR_HO_time'] < 5)):
-            change_band(dev2, choice)
-            print('action2 triggered')
+#         if (preds1['RLF'] > thr) and ( (preds2['NR_HO'] > 0.5) and (preds2['NR_HO_time'] < 5)):
+#             change_band(dev1, '1:3:7:8')
+#             print('action2 triggered')
+#         elif (preds2['RLF'] > thr) and ( (preds1['NR_HO'] > 0.5) and (preds1['NR_HO_time'] < 5)):
+#             change_band(dev2, choice)
+#             print('action2 triggered')
             
-    # RLF + HO setup
-    def action3():
+#     # RLF + HO setup
+#     def action3():
 
-        if (preds1['RLF'] > thr) and ( preds2['NR_Setup'] > 0.5) :
-            change_band(dev1, '1:3:7:8')
-            print('action3 triggered')
-        elif (preds2['RLF'] > thr) and ( preds2['NR_Setup'] > 0.5):
-            change_band(dev2, choice)
-            print('action3 triggered')
+#         if (preds1['RLF'] > thr) and ( preds2['NR_Setup'] > 0.5) :
+#             change_band(dev1, '1:3:7:8')
+#             print('action3 triggered')
+#         elif (preds2['RLF'] > thr) and ( preds2['NR_Setup'] > 0.5):
+#             change_band(dev2, choice)
+#             print('action3 triggered')
 
-    # actions running
-    #=================
-    action1()
-    action2()
-    action3()
+#     # actions running
+#     #=================
+#     action1()
+#     action2()
+#     action3()
 
 if __name__ == "__main__":
     
@@ -245,9 +361,14 @@ if __name__ == "__main__":
     myanalyzer1.reset(); myanalyzer2.reset()
     time.sleep(1) # buffer time
 
+    ### Read Coefficients
     time_seq = 20
     count = 1
 
+    # Read Handover Profile
+    coef_ul = pd.read_pickle('./HO_profiles/coef_ul.pkl')
+    coef_dl = pd.read_pickle('./HO_profiles/coef_dl.pkl')
+    
     # cd modem-utilities to run code
     os.chdir("../../../modem-utilities/")
     
@@ -279,7 +400,7 @@ if __name__ == "__main__":
                     x_in2 = np.concatenate((x_in2, features2), axis=0)
 
                 print(f'{20-count} second after start...')
-                print(count, x_in1.shape, x_in2.shape)
+                # print(count, x_in1.shape, x_in2.shape)
                 count += 1
 
                 # record
@@ -301,9 +422,12 @@ if __name__ == "__main__":
 
                 ############ Action Here ##############
 
-                # show_predictions(out1)
-                # show_predictions(out2)
-                Action(out1, out2)
+                show_predictions(out1)
+                show_predictions(out2)
+                evt1, evt2 = happened_Events(out1, out2)
+                eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
+                print(eval_plr, eval_plr1, eval_plr2)
+                Action(eval_plr, eval_plr1, eval_plr2)
 
                 #######################################
 
@@ -320,10 +444,11 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         
         # Stop Record
+         
         f_out.close()
         myanalyzer1.save_path = ''; myanalyzer1.f.close()
         myanalyzer2.save_path = ''; myanalyzer2.f.close()
         print("Ending code.")
     
-        time.sleep(.2)
+        time.sleep(1)
         sys.exit()
