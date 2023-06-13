@@ -87,7 +87,7 @@ def change_band(dev, band):
     original = query_band(dev)
     subprocess.Popen([f'./band-setting.sh -i {dev} -l {band}'], shell=True)
     # new = query_band(dev)
-    print(f"Change {dev} from {original} to {band}.")
+    print(f"**********Change {dev} from {original} to {band}.**********")
 
 # show
 HOs = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF']
@@ -426,7 +426,7 @@ if __name__ == "__main__":
                 show_predictions(out2)
                 evt1, evt2 = happened_Events(out1, out2)
                 eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
-                print(eval_plr, eval_plr1, eval_plr2)
+                # print(eval_plr, eval_plr1, eval_plr2)
                 Action(eval_plr, eval_plr1, eval_plr2)
 
                 #######################################
