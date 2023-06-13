@@ -106,14 +106,14 @@ def show_predictions(predictions):
     thr = 0.5
     if predictions['LTE_HO'] > thr:
         v = predictions['LTE_HO_time']
-        print(f'Prediciotn: {v} remaining LTE Ho happen!!!')
+        print(f'Prediction: {v} remaining LTE Ho happen!!!')
     if predictions['NR_HO'] > thr:
         v = predictions['NR_HO_time']
-        print(f'Prediciotn: {v} remaining LTE Ho happen!!!')
+        print(f'Prediction: {v} remaining NR Ho happen!!!')
     if predictions['NR_Setup'] > thr:
-        print(f'Prediciotn: Near NR setup!!!')
+        print(f'Prediction: Near NR setup!!!')
     if predictions['RLF'] > thr:
-        print(f'Prediciotn: Near RLF!!!')
+        print(f'Prediction: Near RLF!!!')
 
 def happened_Events(preds1, preds2):
 
