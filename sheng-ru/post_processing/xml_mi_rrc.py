@@ -159,7 +159,7 @@ for fname in filenames:
     print("rrc >>>>>")
     #Writing the column names... If you want to add something, don't forget the comma at the end!!
     #-------------------------------------------------
-    f2.write(",".join(["time", "type_id",
+    f2.write(",".join(["Timestamp", "type_id",
         "PCI",
         "UL_DL",
         "Freq",
