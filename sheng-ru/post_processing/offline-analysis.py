@@ -33,8 +33,8 @@ if __name__ == "__main__":
         logger.set_source(src)
         
         # src.enable_log("LTE_PHY_Serv_Cell_Measurement")
-        src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
-        src.enable_log("LTE_PHY_Connected_Mode_Intra_Freq_Meas")
+        # src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
+        # src.enable_log("LTE_PHY_Connected_Mode_Intra_Freq_Meas")
         # src.enable_log("LTE_NB1_ML1_GM_DCI_Info")
 
         # Analyzers

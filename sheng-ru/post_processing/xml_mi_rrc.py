@@ -88,8 +88,13 @@ def get_event_paras(f, eventId, l):
             paras['thr'], paras['hys'], paras['ttt'] = threshold, hysteresis, timeToTrigger
         elif "\"nr-rrc.eventId\"" in l:
             l = passlines(4, f)
+
             threshold =  get_text(l, "rsrp")
-            threshold = '[' + threshold.split(" ")[0] + ', ' + threshold.split(" ")[4] + ')'
+            # Deal with some special case. 
+            try:
+                threshold = '[' + threshold.split(" ")[0] + ', ' + threshold.split(" ")[4] + ')'
+            except:
+                threshold = threshold.split(" ")[2]
             hysteresis, timeToTrigger = nr_get_hys_and_ttt()
             paras['thr'], paras['hys'], paras['ttt'] = threshold, hysteresis, timeToTrigger
     elif eventId == "eventA3 (2)": ## A3
