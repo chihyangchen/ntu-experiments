@@ -2,10 +2,10 @@ import os
 import sys
 import subprocess
 import time
-from threading import Thread
+# from threading import Thread
 import multiprocessing
 from multiprocessing import Process
-import signal
+# import signal
 import datetime as dt
 import argparse
 import json
@@ -17,10 +17,6 @@ import random
 # Machine Learning Model
 import xgboost as xgb
 
-# Import MobileInsight modules
-from mobile_insight.analyzer import *
-from mobile_insight.monitor import OnlineMonitor
-from mobile_insight.analyzer import MyAnalyzer
 
 class Predicter():
 
@@ -83,18 +79,34 @@ def query_band(dev):
     
     return result
 
+# Use AT command to
+# Query modem current serving pci, earfcn
+def query_pci_earfcn(dev):
+
+    out = subprocess.check_output(f'./get-pci-freq.sh -i {dev}', shell=True)
+    out = out.decode('utf-8')
+    lte_info = out.split('\n')[2]
+    nr_info = out.split('\n')[3]
+    pci, earfcn, band = lte_info.split(',')[5], lte_info.split(',')[6], lte_info.split(',')[7]
+    nr_pci = nr_info.split(',')[3]
+    
+    return pci, earfcn, band, nr_pci
+
+    
 # Change band function
 def change_band(dev, band, variable_id):
 
-    global setting1, setting2
+    global setting1, setting2, rest
     subprocess.Popen([f'./band-setting.sh -i {dev} -l {band}'], shell=True)
 
     if variable_id == 1:
-        setting1 = band
         print(f"**********Change {dev} from {setting1} to {band}.**********")
+        setting1 = band
     elif variable_id == 2:
-        setting2 = band
         print(f"**********Change {dev} from {setting2} to {band}.**********")
+        setting2 = band
+        
+    rest = rest_time
 
 # show
 HOs = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF']
@@ -108,21 +120,24 @@ def show_HO(dev, analyzer):
         if v == 1:
             print(f'{dev} HO {k} happened!!!!!')
 
-def show_predictions(predictions):
+def show_predictions(dev, predictions):
 
     thr = 0.5
     if predictions['LTE_HO'] > thr:
         v = predictions['LTE_HO_time']
-        print(f'Prediction: {v} remaining LTE Ho happen!!!')
+        print(f'{dev} Prediction: {v} remaining LTE Ho happen!!!')
     if predictions['NR_HO'] > thr:
         v = predictions['NR_HO_time']
-        print(f'Prediction: {v} remaining NR Ho happen!!!')
+        print(f'{dev} Prediction: {v} remaining NR Ho happen!!!')
     if predictions['NR_Setup'] > thr:
-        print(f'Prediction: Near NR setup!!!')
+        print(f'{dev} Prediction: Near NR setup!!!')
     if predictions['RLF'] > thr:
-        print(f'Prediction: Near RLF!!!')
+        print(f'{dev} Prediction: Near RLF!!!')
 
 
+remain_time_for_cls_model = 2
+
+# Useful function for action design.
 def happened_Events(preds1, preds2):
 
     evt1 = {'LTE_HO': None, 'NR_HO': None, 'NR_Setup': None, 'RLF': None}
@@ -139,18 +154,56 @@ def happened_Events(preds1, preds2):
             evt['NR_HO'] = preds['NR_HO_time']
         
         if preds['NR_Setup'] > thr:
-            evt['NR_Setup'] = 2
+            evt['NR_Setup'] = remain_time_for_cls_model
         
         if preds['RLF'] > thr:
-            evt['RLF'] = 2    
+            evt['RLF'] = remain_time_for_cls_model    
     
     return evt1, evt2
+
+# Classification case 'Far' from HO or 'Close' from HO.
+# This function input the output from function happened event and
+# output the classification of the radio is near or far from a HO. 
+def class_far_close(evt1, evt2):
+
+    cls_result = []
+    remain_time1, remain_time2 = [], [] 
+    threshold = 3 # Threshold for 
+     
+    for evt, remain_time in zip([evt1, evt2], [remain_time1, remain_time2]):
+    
+        if evt['NR_Setup'] is not None:
+            remain_time.append(remain_time_for_cls_model)
+            
+        if evt['RLF'] is not None:    
+            remain_time.append(remain_time_for_cls_model)
+            
+        if evt['LTE_HO'] is not None:
+            remain_time.append(evt['LTE_HO'])
+            
+        if evt['NR_HO'] is not None:
+            remain_time.append(evt['NR_HO'])
+            
+        if len(remain_time) == 0 or all(t < threshold for t in remain_time):
+            cls_result.append('Far')
+        else:
+            cls_result.append('Close')
+            
+    return (cls_result[0], remain_time1, cls_result[1], remain_time2)
+
+def check_difference_less_than_off(list_a, list_b, off):
+    if not list_a or not list_b:  
+        return False
+    for a in list_a:
+        for b in list_b:
+            if abs(a - b) < off:
+                return True
+    return False
 
 from collections import namedtuple
 import pandas as pd
 import matplotlib.pyplot as plt
 
-### Function
 def evaluate_plr(radio1, radio2, predict_time=10, spr=500, show_fig=False):
     
     def heaviside(x, left, right):
@@ -220,12 +273,14 @@ def evaluate_plr(radio1, radio2, predict_time=10, spr=500, show_fig=False):
 def Action(eval_plr, eval_plr1, eval_plr2):
 
     global setting1, setting2
+    
     choices = {'3:7', '7:8', '3:8'}
-    choices1, choices2 = choices - set([setting1]), choices - set([setting2])
-    choice1, choice2 = random.sample(choices1, 1), random.sample(choices2, 1)
+    choices1, choices2 = choices - {setting1}, choices - {setting2}
+    choice1, choice2 = random.sample(choices1, 1)[0], random.sample(choices2, 1)[0]
     
-    dl_thr, ul_thr = 0.5, 0.1
-    
+    # dl_thr, ul_thr = 0.5, 0.1
+    dl_thr, ul_thr = 0.18, 0.1
+
     if (eval_plr.dl > dl_thr):
         
         if (eval_plr1.dl > eval_plr2.dl):
@@ -238,13 +293,18 @@ def Action(eval_plr, eval_plr1, eval_plr2):
         if (eval_plr1.ul > eval_plr2.ul):
             change_band(dev1, choice1, 1)
         else:
-            change_band(dev2, choice2, 2)
-
-# Online features collected.
-def device_running(dev, ser, exc, output_queue, start_sync_event, sync_event, SHOW_HO=False):
+            change_band(dev2, choice2, 2)    
+    
+# Online features collected and ML model inferring.
+def device_running(dev, ser, exc, output_queue, start_sync_event, SHOW_HO=False):
     
     import xgboost as xgb
-
+    from threading import Thread
+    
+    # Import MobileInsight modules
+    from mobile_insight.monitor import OnlineMonitor
+    from mobile_insight.analyzer import MyAnalyzer
+    
     # Loading Model
     lte_classifier = 'model/lte_HO_cls_xgb.json'
     nr_classifier = 'model/nr_HO_cls_xgb.json'
@@ -257,12 +317,12 @@ def device_running(dev, ser, exc, output_queue, start_sync_event, sync_event, SH
     src = OnlineMonitor()
     src.set_serial_port(ser)  # the serial port to collect the traces
     src.set_baudrate(baudrate)  # the baudrate of the port
-    save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_dict_{dev}_{t}.mi2log")
+    save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev}_{t}.mi2log")
     src.save_log_as(save_path)
     myanalyzer = MyAnalyzer()
     myanalyzer.set_source(src)
 
-    save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f"record_{dev}_{t}.txt")
+    save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f"record_{dev}_{t}.csv")
     f_out = open(save_path, 'w')
     f_out.write(','.join(['LTE_HO, MN_HO', 'SN_setup', 'SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
                           'num_of-neis', 'RSRP', 'RSRQ', 'RSRP1', 'RSRQ1',
@@ -286,12 +346,14 @@ def device_running(dev, ser, exc, output_queue, start_sync_event, sync_event, SH
     try:
         while True:
             
-            sync_event.wait()
+            start = time.time()
             myanalyzer.to_featuredict()
             features = get_array_features(myanalyzer)
 
             if SHOW_HO:
                 show_HO(dev, myanalyzer)
+                
+            myanalyzer.reset()
 
             if count <= time_seq:
                 
@@ -320,9 +382,12 @@ def device_running(dev, ser, exc, output_queue, start_sync_event, sync_event, SH
 
                 output_queue.put([dev, out])
 
-            myanalyzer.reset()
-            sync_event.clear()
-
+            
+            # time.sleep(1)
+            end = time.time()
+            if 1-(end-start) > 0:
+                time.sleep(1-(end-start))
+            
             if exc.is_set():
                 raise KeyboardInterrupt
 
@@ -336,7 +401,7 @@ def device_running(dev, ser, exc, output_queue, start_sync_event, sync_event, SH
 
 if __name__ == "__main__":
 
-    global setting1, setting2
+    global setting1, setting2, rest
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--device", type=str, nargs='+', help="device: e.g. qc00 qc01")
@@ -352,7 +417,7 @@ if __name__ == "__main__":
         ser2 = os.path.join("/dev/serial/by-id", f"usb-Quectel_RM500Q-GL_{ser2}-if00-port0")
 
     print(dev1, dev2, ser1, ser2)
-
+    
     # Record time
     now = dt.datetime.today()
     t = '-'.join([str(x) for x in[ now.year%100, now.month, now.day, now.hour, now.minute]])
@@ -367,24 +432,32 @@ if __name__ == "__main__":
     # multipleprocessing
     output_queue = multiprocessing.Queue()
     start_sync_event = multiprocessing.Event()
-    sync_event = multiprocessing.Event()
 
     exception1 = multiprocessing.Event()
     exception2 = multiprocessing.Event()
 
     time.sleep(.2)
     
-    SHOW_HO = False
-    p1 = Process(target=device_running, args=[dev1, ser1, exception1, output_queue, start_sync_event, sync_event, SHOW_HO])
+    SHOW_HO = True
+    p1 = Process(target=device_running, args=[dev1, ser1, exception1, output_queue, start_sync_event, SHOW_HO])
     p1.start()    
     
-    p2 = Process(target=device_running, args=[dev2, ser2, exception2, output_queue, start_sync_event, sync_event, SHOW_HO])
+    p2 = Process(target=device_running, args=[dev2, ser2, exception2, output_queue, start_sync_event, SHOW_HO])
     p2.start()
 
-        # cd modem-utilities to run code
+    # cd modem-utilities folder to use AT command.
     os.chdir("../../../modem-utilities/")
+    
+    # Global parameters and some other parameters
     setting1, setting2 = query_band(dev1), query_band(dev2)
-
+    rest = 0
+    rest_time = 5
+    offset_too_close = 1
+    offset_eval = 0.05
+    all_band_choice = {'3', '7', '8'}
+    radical = False
+    
+    # Sync two device.
     time.sleep(3)
     start_sync_event.set()
     time.sleep(.1)
@@ -395,7 +468,6 @@ if __name__ == "__main__":
         while True: 
             
             start = time.time()
-            sync_event.set()
             outs = {}
             
             while not output_queue.empty():
@@ -406,19 +478,90 @@ if __name__ == "__main__":
 
                 out1 = outs[dev1]
                 out2 = outs[dev2]
-                ############ Action Here ##############
+                
+                # Show prediction result during experiment. 
+                show_predictions(dev1, out1)
+                show_predictions(dev2, out2)
+                
+                ################ Action Here ################
+                # Do nothing if too close to previous action.
+                if rest > 0:
+                    rest -= 1
+                    print(rest)
+                else:
+                    
+                    evt1, evt2 = happened_Events(out1, out2)
+                    case1, remain_time1, case2, remain_time2 = class_far_close(evt1, evt2)    
+                    # Format of info: (pci, earfcn, band, nr_pci)
+                    info1, info2 = query_pci_earfcn(dev1), query_pci_earfcn(dev2)
+                    
+                    if case1 == 'Far' and case2 == 'Far':
+                        
+                        # To check if dev1 and dev2 have same pci,
+                        # if so, try other band.
+                        if info1[0] == info2[0]:
+                            
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            change_band(dev2, choice, 2)
+                        
+                    elif case1 == 'Close' and case2 == 'Far':
+                    
+                        # To check if two event is too close.
+                        if check_difference_less_than_off(remain_time1, remain_time2, offset_too_close):
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            change_band(dev1, choice, 1)
+                    
+                    elif case1 == 'Far' and case2 == 'Close':
+                    
+                        # Do if radical = True
+                        if radical:
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            change_band(dev2, choice, 2)
+                            
+                        # To check if two event is too close.
+                        elif check_difference_less_than_off(remain_time1, remain_time2, offset_too_close):
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            change_band(dev2, choice, 2)
+                    
+                    elif case1 == 'Close' and case2 == 'Close':
+                        
+                        _, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
+                        
+                        # If event severety too close, change the earlier one.
+                        if abs(eval_plr1.dl - eval_plr2.dl) < offset_eval:
+                            
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            if min(remain_time1) < min(remain_time2):
+                                change_band(dev1, choice, 1)
+                            else:
+                                change_band(dev2, choice, 2)
+                        
+                        elif eval_plr1.dl > eval_plr2.dl:
+                            
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            change_band(dev1, choice, 1)
+                            
+                        elif eval_plr1.dl < eval_plr2.dl:
+                            
+                            choices = all_band_choice - {info1[2]} - {info2[2]}
+                            choice = ':'.join(sorted(list(choices)))
+                            change_band(dev2, choice, 2)       
+                    
+                    # eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
+                    # print(eval_plr, eval_plr1, eval_plr2)
+                    # Action(eval_plr, eval_plr1, eval_plr2)
 
-                # show_predictions(out1)
-                # show_predictions(out2)
-                evt1, evt2 = happened_Events(out1, out2)
-                eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
-                # print(eval_plr, eval_plr1, eval_plr2)
-                Action(eval_plr, eval_plr1, eval_plr2)
-
-                #######################################
+                #############################################
 
             end = time.time()
-            time.sleep(1-(end-start))
+            if 1-(end-start) > 0:
+                time.sleep(1-(end-start))
 
     except KeyboardInterrupt:
         

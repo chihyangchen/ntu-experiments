@@ -220,7 +220,7 @@ if __name__ == "__main__":
                 #######################################
 
                 # record
-                w = [str(e) for e in list(features)+out]
+                w = [str(e) for e in list(features) + list(out.values())]
                 f_out.write(','.join(w) + ',\n')
 
             myanalyzer.reset()

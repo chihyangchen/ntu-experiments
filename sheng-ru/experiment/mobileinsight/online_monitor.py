@@ -53,8 +53,8 @@ if __name__ == "__main__":
     # src.enable_log("5G_NR_MAC_UL_Physical_Channel_Schedule_Report")
     # src.enable_log("5G_NR_MAC_PDSCH_Stats")
     # src.enable_log("5G_NR_MAC_RACH_Trigger")
-    src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
-    src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
+    # src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
+    # src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
 
     # Myanalyzer
     # myanalyzer = MyAnalyzer()
