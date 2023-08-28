@@ -171,6 +171,8 @@ for fname in filenames:
         # Serving cell info
         "DL frequency",
         "UL frequency",
+        "DL bandwidth",
+        "UL bandwidth",
         "Cell Identity",
         "TAC",
         "Band ID",
@@ -424,15 +426,15 @@ for fname in filenames:
                 PCI = soup.find(key="Cell ID").get_text()
                 DL_f = soup.find(key="Downlink frequency").get_text()
                 UL_f = soup.find(key="Uplink frequency").get_text()
-                # DL_BW = soup.find(key="Downlink bandwidth").get_text()
-                # UL_BW = soup.find(key="Uplink bandwidth").get_text()
+                DL_BW = soup.find(key="Downlink bandwidth").get_text()
+                UL_BW = soup.find(key="Uplink bandwidth").get_text()
                 Cell_identity = soup.find(key="Cell Identity").get_text()
                 TAC = soup.find(key="TAC").get_text()
                 Band_ID = soup.find(key="Band Indicator").get_text()
                 MCC = soup.find(key="MCC").get_text()
                 # MNC_d = soup.find(key="MNC Digit").get_text()
                 MNC = soup.find(key="MNC").get_text()                
-                f2.write(",".join([timestamp, type_id, PCI,'','', DL_f, UL_f, Cell_identity, TAC, Band_ID, MCC, MNC] )+'\n')
+                f2.write(",".join([timestamp, type_id, PCI,'','', DL_f, UL_f, DL_BW, UL_BW, Cell_identity, TAC, Band_ID, MCC, MNC] )+'\n')
                 l = f.readline()
                 continue
                 
@@ -662,7 +664,7 @@ for fname in filenames:
                     
                     l = f.readline()
                 l = f.readline()
-                f2.write(",".join([timestamp, type_id, PCI, UL_DL, Freq] + ['']*7 + type_code)+'\n')
+                f2.write(",".join([timestamp, type_id, PCI, UL_DL, Freq] + ['']*9 + type_code)+'\n')
         else:
             print(l,"Error! Invalid data content.")
             delete = True
