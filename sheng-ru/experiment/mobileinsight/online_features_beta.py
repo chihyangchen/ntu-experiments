@@ -16,24 +16,38 @@ import random
 
 # Machine Learning Model
 import xgboost as xgb
-
+import catboost as cb
 
 class Predicter():
 
     def __init__(self, lte_cls, nr_cls, lte_fst, nr_fst, set_up, rlf):
         
+        
+        
         self.lte_clssifier  = xgb.Booster()
         self.lte_clssifier.load_model(lte_cls)
 
-        self.nr_clssifier  = xgb.Booster()
+        # NR Classifier
+        # =================================
+        # self.nr_clssifier  = xgb.Booster()
+        # self.nr_clssifier.load_model(nr_cls)
+        
+        self.nr_clssifier  = cb.CatBoostClassifier()
         self.nr_clssifier.load_model(nr_cls)
+        # =================================
         
         self.lte_forecaster = xgb.Booster()
         self.lte_forecaster.load_model(lte_fst)
 
-        self.nr_forecaster =  xgb.Booster()
+        # NR Forecaster 
+        # =================================
+        # self.nr_forecaster =  xgb.Booster()
+        # self.nr_forecaster.load_model(nr_fst)
+        
+        self.nr_forecaster =  cb.CatBoostRegressor()
         self.nr_forecaster.load_model(nr_fst)
-
+        # =================================
+        
         self.setup_clssifier =  xgb.Booster()
         self.setup_clssifier.load_model(set_up)
 
@@ -42,13 +56,21 @@ class Predicter():
 
     def foward(self, x_in):
 
+        x_in_D = xgb.DMatrix(x_in.reshape(1,-1))
+        
         names = ['LTE_HO', 'NR_HO', 'LTE_HO_time', 'NR_HO_time', 'NR_Setup', 'RLF']
-        o1 = self.lte_clssifier.predict(x_in)
-        o2 = self.nr_clssifier.predict(x_in)
-        o3 = self.lte_forecaster.predict(x_in)
+        o1 = self.lte_clssifier.predict(x_in_D)
+
+        o2 = self.nr_clssifier.predict_proba(x_in)[1]
+        # o2 = self.nr_clssifier.predict(x_in_D)
+
+        o3 = self.lte_forecaster.predict(x_in_D)
+        
         o4 = self.nr_forecaster.predict(x_in)
-        o5 = self.setup_clssifier.predict(x_in)
-        o6 = self.rlf_clssifier.predict(x_in)
+        # o4 = self.nr_forecaster.predict(x_in_D)    
+        
+        o5 = self.setup_clssifier.predict(x_in_D)
+        o6 = self.rlf_clssifier.predict(x_in_D)
         
         out = [o1,o2,o3,o4,o5,o6]
         out = {k: v.item() for k, v in zip(names, out)}
@@ -296,10 +318,10 @@ def Action(eval_plr, eval_plr1, eval_plr2):
             change_band(dev2, choice2, 2)    
     
 # Online features collected and ML model inferring.
-def device_running(dev, ser, exc, output_queue, start_sync_event, SHOW_HO=False):
+def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
     
     import xgboost as xgb
-    from threading import Thread
+    from threading import Timer
     
     # Import MobileInsight modules
     from mobile_insight.monitor import OnlineMonitor
@@ -307,9 +329,9 @@ def device_running(dev, ser, exc, output_queue, start_sync_event, SHOW_HO=False)
     
     # Loading Model
     lte_classifier = 'model/lte_HO_cls_xgb.json'
-    nr_classifier = 'model/nr_HO_cls_xgb.json'
+    nr_classifier = 'model/nr_HO_cls_cb'
     lte_forecaster = 'model/lte_HO_fcst_xgb.json'
-    nr_forecaster = 'model/nr_HO_fcst_xgb.json'
+    nr_forecaster = 'model/nr_HO_fst_cb'
     setup_classifier = 'model/setup_cls_xgb.json'
     rlf_classifier = 'model/rlf_cls_xgb.json'
     predictor = Predicter(lte_classifier, nr_classifier, lte_forecaster, nr_forecaster, setup_classifier, rlf_classifier)
@@ -329,75 +351,64 @@ def device_running(dev, ser, exc, output_queue, start_sync_event, SHOW_HO=False)
                           'nr-RSRP', 'nr-RSRQ', 'nr-RSRP1', 'nr-RSRQ1',
                           'lte_cls','nr_cls','lte_fst','nr_fst','setup_cls','rlf_cls']) + '\n')
     
-    def run_src():
-        src.run()
+    def run_prediction():
+        
+        global count, x_in
 
-    thread = Thread(target=run_src, daemon=True)
-    thread.start()
+        myanalyzer.to_featuredict()
+        features = get_array_features(myanalyzer)
 
-    # For ML model running
-    time.sleep(.5) # Clean time
-    myanalyzer.reset() 
+        if SHOW_HO:
+            show_HO(dev, myanalyzer)
+            
+        myanalyzer.reset()
 
+        if count <= time_seq:
+            
+            if count == 1: x_in = features
+            else: x_in = np.concatenate((x_in, features), axis=0)
+
+            print(f'{dev} {20-count} second after start...')
+
+            count += 1
+
+            # record
+            w = [str(e) for e in list(features)]
+            try: f_out.write(','.join(w + ['']*6) + ',\n') 
+            except: pass
+            
+        else:
+            
+            x_in = np.concatenate((x_in[len(selected_features):], features), axis=0)
+            out = predictor.foward(x_in)    
+        
+            # record
+            w = [str(e) for e in list(features) + list(out.values())]
+            try: f_out.write(','.join(w) + ',\n')
+            except: pass
+            
+            output_queue.put([dev, out])
+                
+
+        Timer(1, run_prediction).start()
+
+    global count, x_in
+    count = 1
+    x_in = np.array([])
+    
     start_sync_event.wait()
     print(f'Start {dev}.')
-    count = 1
+    
+    thread = Timer(1, run_prediction)
+    thread.daemon = True
+    thread.start()
 
     try:
-        while True:
-            
-            start = time.time()
-            myanalyzer.to_featuredict()
-            features = get_array_features(myanalyzer)
-
-            if SHOW_HO:
-                show_HO(dev, myanalyzer)
-                
-            myanalyzer.reset()
-
-            if count <= time_seq:
-                
-                if count == 1: x_in = features
-                else: x_in = np.concatenate((x_in, features), axis=0)
-
-                print(f'{dev} {20-count} second after start...')
-
-                count += 1
-
-                # record
-                w = [str(e) for e in list(features)]
-                f_out.write(','.join(w + ['']*6) + ',\n') 
-            
-            else:
-                
-                x_in = np.concatenate((x_in[len(selected_features):], features), axis=0)
-                x_in_D = xgb.DMatrix(x_in.reshape(1,-1))
-                out = predictor.foward(x_in_D)
-                
-                # print(f'{dev}: {out}')
-
-                # record
-                w = [str(e) for e in list(features) + list(out.values())]
-                f_out.write(','.join(w) + ',\n')
-
-                output_queue.put([dev, out])
-
-            
-            # time.sleep(1)
-            end = time.time()
-            if 1-(end-start) > 0:
-                time.sleep(1-(end-start))
-            
-            if exc.is_set():
-                raise KeyboardInterrupt
-
-    except KeyboardInterrupt:
-
+        src.run()
+    except:
         f_out.close()
-        time.sleep(1)
+        time.sleep(.5)
         print(f'End {dev}.')
-        sys.exit()
-
 
 if __name__ == "__main__":
 
@@ -425,7 +436,7 @@ if __name__ == "__main__":
     ### Read Coefficients
     time_seq = 20
 
-    # Read Handover Profile
+    # # Read Handover Profile
     coef_ul = pd.read_pickle('./HO_profiles/coef_ul.pkl')
     coef_dl = pd.read_pickle('./HO_profiles/coef_dl.pkl')
 
@@ -433,16 +444,13 @@ if __name__ == "__main__":
     output_queue = multiprocessing.Queue()
     start_sync_event = multiprocessing.Event()
 
-    exception1 = multiprocessing.Event()
-    exception2 = multiprocessing.Event()
-
     time.sleep(.2)
     
     SHOW_HO = True
-    p1 = Process(target=device_running, args=[dev1, ser1, exception1, output_queue, start_sync_event, SHOW_HO])
+    p1 = Process(target=device_running, args=[dev1, ser1, output_queue, start_sync_event, SHOW_HO])
     p1.start()    
     
-    p2 = Process(target=device_running, args=[dev2, ser2, exception2, output_queue, start_sync_event, SHOW_HO])
+    p2 = Process(target=device_running, args=[dev2, ser2, output_queue, start_sync_event, SHOW_HO])
     p2.start()
 
     # cd modem-utilities folder to use AT command.
@@ -454,7 +462,9 @@ if __name__ == "__main__":
     rest_time = 5
     offset_too_close = 1
     offset_eval = 0.05
-    all_band_choice = {'1', '3', '7', '8'}
+    all_band_choice = ['1', '3', '7', '8', '1:3:7:8', 
+                       '1:3', '3:7', '3:8', '7:8', '1:7', '1:8',
+                       '1:3:7', '1:3:8', '1:7:8', '3:7:8']
     radical = False
     
     # Sync two device.
@@ -487,7 +497,7 @@ if __name__ == "__main__":
                 # Do nothing if too close to previous action.
                 if rest > 0:
                     rest -= 1
-                    print(rest)
+                    print(f'Rest for {rest} more second.')
                 else:
                     
                     evt1, evt2 = happened_Events(out1, out2)
@@ -501,30 +511,30 @@ if __name__ == "__main__":
                         # if so, try other band.
                         if info1[0] == info2[0]:
                             
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
                             change_band(dev2, choice, 2)
                         
                     elif case1 == 'Close' and case2 == 'Far':
                     
                         # To check if two event is too close.
                         if check_difference_less_than_off(remain_time1, remain_time2, offset_too_close):
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
                             change_band(dev1, choice, 1)
                     
                     elif case1 == 'Far' and case2 == 'Close':
                     
                         # Do if radical = True
                         if radical:
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
                             change_band(dev2, choice, 2)
                             
                         # To check if two event is too close.
                         elif check_difference_less_than_off(remain_time1, remain_time2, offset_too_close):
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
                             change_band(dev2, choice, 2)
                     
                     elif case1 == 'Close' and case2 == 'Close':
@@ -534,8 +544,9 @@ if __name__ == "__main__":
                         # If event severety too close, change the earlier one.
                         if abs(eval_plr1.dl - eval_plr2.dl) < offset_eval:
                             
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
+                            
                             if min(remain_time1) < min(remain_time2):
                                 change_band(dev1, choice, 1)
                             else:
@@ -543,14 +554,14 @@ if __name__ == "__main__":
                         
                         elif eval_plr1.dl > eval_plr2.dl:
                             
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
                             change_band(dev1, choice, 1)
                             
                         elif eval_plr1.dl < eval_plr2.dl:
                             
-                            choices = all_band_choice - {info1[2]} - {info2[2]}
-                            choice = ':'.join(sorted(list(choices)))
+                            choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
+                            choice =  random.sample(choices, 1)[0]
                             change_band(dev2, choice, 2)       
                     
                     # eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
@@ -567,9 +578,7 @@ if __name__ == "__main__":
         
         # Stop Record
         print('Main process received KeyboardInterrupt')
-        exception1.set()
-        exception2.set()
-
+        
         p1.join()
         p2.join()
 
