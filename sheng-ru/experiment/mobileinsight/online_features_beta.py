@@ -505,6 +505,7 @@ if __name__ == "__main__":
                     # Format of info: (pci, earfcn, band, nr_pci)
                     info1, info2 = query_pci_earfcn(dev1), query_pci_earfcn(dev2)
                     
+                    # case (far, far)
                     if case1 == 'Far' and case2 == 'Far':
                         
                         # To check if dev1 and dev2 have same pci,
@@ -514,7 +515,8 @@ if __name__ == "__main__":
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
                             change_band(dev2, choice, 2)
-                        
+                    
+                    # case (far, close)
                     elif case1 == 'Close' and case2 == 'Far':
                     
                         # To check if two event is too close.
@@ -537,6 +539,7 @@ if __name__ == "__main__":
                             choice =  random.sample(choices, 1)[0]
                             change_band(dev2, choice, 2)
                     
+                    # case (close, close)
                     elif case1 == 'Close' and case2 == 'Close':
                         
                         _, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)

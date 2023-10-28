@@ -5,18 +5,20 @@ import time
 
 def pcap_to_csv(infilepath, outfilepath):
     # TCP
-    s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e ip.src -e ip.dst -e _ws.col.Protocol "\
-        "-e frame.len -e tcp.analysis.acks_frame -e tcp.seq_raw -e tcp.len -e tcp.analysis.ack_rtt -e tcp.srcport "\
-        "-e tcp.dstport -e tcp.analysis.bytes_in_flight -e tcp.analysis.retransmission -e tcp.analysis.fast_retransmission "\
-        f"-e tcp.analysis.out_of_order -E header=y -E separator=@ >{outfilepath}"
+    # s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e ip.src -e ip.dst -e _ws.col.Protocol "\
+    #     "-e frame.len -e tcp.analysis.acks_frame -e tcp.seq_raw -e tcp.len -e tcp.analysis.ack_rtt -e tcp.srcport "\
+    #     "-e tcp.dstport -e tcp.analysis.bytes_in_flight -e tcp.analysis.retransmission -e tcp.analysis.fast_retransmission "\
+    #     f"-e tcp.analysis.out_of_order -E header=y -E separator=@ >{outfilepath}"
     
-#     s = "tshark -r %s -T\
-# fields -e frame.number -e frame.time -e ip.src -e ip.dst\
-#  -e frame.len -e tcp.analysis.acks_frame  -e tcp.len -e tcp.analysis.ack_rtt -e tcp.srcport -e tcp.dstport -e _ws.col.Info -e tcp.payload -E header=y -E separator=@ >%s"%(infilepath, outfilepath)
+    # UDP
+    s = f"tshark -r {infilepath} -T fields -e frame.number -e frame.time -e frame.len \
+        -e sll.pkttype -e _ws.col.Protocol -e ip.proto -e ip.len -e ip.src -e ip.dst \
+        -e udp.length -e udp.srcport -e udp.dstport -e data.len -e udp.payload -e _ws.col.Info \
+        -E header=y -E separator=@ > {outfilepath}"
     
     print(s)
     subprocess.Popen([s], shell=True)
-    time.sleep(20)
+    time.sleep(5)
 
 if os.path.isdir(sys.argv[1]):
 
@@ -33,10 +35,6 @@ if os.path.isdir(sys.argv[1]):
 elif sys.argv[1].endswith(".pcap"):
 
     fname = sys.argv[1]
-
-    if not fname.endswith(".pcap"):
-        exit
-        
     pcap_to_csv(fname, os.path.join(fname[:fname.find(".pcap")]+"_pcap.csv"))
 
 else:
