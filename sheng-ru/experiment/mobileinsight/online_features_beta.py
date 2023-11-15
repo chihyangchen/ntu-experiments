@@ -462,7 +462,7 @@ if __name__ == "__main__":
     rest_time = 5
     offset_too_close = 1
     offset_eval = 0.05
-    all_band_choice = ['1', '3', '7', '8', '1:3:7:8', 
+    all_band_choice = [ '3', '7', '8', '1:3:7:8', 
                        '1:3', '3:7', '3:8', '7:8', '1:7', '1:8',
                        '1:3:7', '1:3:8', '1:7:8', '3:7:8']
     radical = False
@@ -490,8 +490,8 @@ if __name__ == "__main__":
                 out2 = outs[dev2]
                 
                 # Show prediction result during experiment. 
-                show_predictions(dev1, out1)
-                show_predictions(dev2, out2)
+                # show_predictions(dev1, out1)
+                # show_predictions(dev2, out2)
                 
                 ################ Action Here ################
                 # Do nothing if too close to previous action.
@@ -503,9 +503,15 @@ if __name__ == "__main__":
                     evt1, evt2 = happened_Events(out1, out2)
                     case1, remain_time1, case2, remain_time2 = class_far_close(evt1, evt2)    
                     # Format of info: (pci, earfcn, band, nr_pci)
-                    info1, info2 = query_pci_earfcn(dev1), query_pci_earfcn(dev2)
+                    try:
+                        info1, info2 = query_pci_earfcn(dev1), query_pci_earfcn(dev2)
+                    except:
+                        end = time.time()
+                        if 1-(end-start) > 0:
+                            time.sleep(1-(end-start))
+                        continue
                     
-                    # case (far, far)
+                    
                     if case1 == 'Far' and case2 == 'Far':
                         
                         # To check if dev1 and dev2 have same pci,
@@ -514,15 +520,21 @@ if __name__ == "__main__":
                             
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
-                            change_band(dev2, choice, 2)
-                    
-                    # case (far, close)
+                            print('Case Same PCI!!!')
+                            try: chx += 1
+                            except: chx = 0
+                            if chx % 2 == 0:
+                                change_band(dev2, choice, 2)
+                            else:
+                                change_band(dev1, choice, 1)
+                                
                     elif case1 == 'Close' and case2 == 'Far':
                     
                         # To check if two event is too close.
                         if check_difference_less_than_off(remain_time1, remain_time2, offset_too_close):
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
+                            print('Case 1 close 2 far!!!')
                             change_band(dev1, choice, 1)
                     
                     elif case1 == 'Far' and case2 == 'Close':
@@ -537,9 +549,9 @@ if __name__ == "__main__":
                         elif check_difference_less_than_off(remain_time1, remain_time2, offset_too_close):
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
+                            print('Case 2 close 1 far!!!')
                             change_band(dev2, choice, 2)
                     
-                    # case (close, close)
                     elif case1 == 'Close' and case2 == 'Close':
                         
                         _, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
@@ -551,20 +563,24 @@ if __name__ == "__main__":
                             choice =  random.sample(choices, 1)[0]
                             
                             if min(remain_time1) < min(remain_time2):
+                                print('Case 2 very close 1 change!!!')
                                 change_band(dev1, choice, 1)
                             else:
+                                print('Case 2 very close 2 change!!!')
                                 change_band(dev2, choice, 2)
                         
                         elif eval_plr1.dl > eval_plr2.dl:
                             
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
+                            print('Case 2 close 1 change!!!')
                             change_band(dev1, choice, 1)
                             
                         elif eval_plr1.dl < eval_plr2.dl:
                             
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
+                            print('Case 2 close 2 change!!!')
                             change_band(dev2, choice, 2)       
                     
                     # eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
