@@ -9,10 +9,6 @@ import sys
 import os
 import re
 
-dirname = sys.argv[1]
-
-filenames = os.listdir(dirname)
-
 def get_text(l, NAME): ## Given l, return XXXX if NAME in l, else it will error, with format "NAME: XXXX".
     a = l.index('"' + NAME)
     k = len(NAME)+3
@@ -151,11 +147,7 @@ def get_event_paras(f, eventId, l):
     
     return str(paras).replace(',', '&')
 
-        
-for fname in filenames:
-    if fname[-4:] != '.txt':
-        continue
-        
+def main(fname):
     print(fname)
     f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
     f_out = os.path.join(sys.argv[1], fname[:-4]+'_rrc.csv')
@@ -679,6 +671,28 @@ for fname in filenames:
     
     if delete:
         os.system(f"rm {f_out}")
+
+
+
+if __name__ == "__main__":
+
+    if os.path.isdir(sys.argv[1]):
+
+        dirname = sys.argv[1]
+        filenames = os.listdir(dirname)
+
+        for fname in filenames:
+            if fname[-4:] != '.txt':
+                continue
+            main(fname)
+
+    elif sys.argv[1].endswith(".txt"):
+        fname = sys.argv[1]
+        main(fname)
+    
+    else:
+        print('WTF did you gave me!!')
+    
     
 
 
