@@ -1,0 +1,2 @@
+v1: Follow by the Professor's advice first algorithm.
+v2: 

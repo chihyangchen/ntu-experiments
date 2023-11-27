@@ -1,16 +1,17 @@
+# Run algorithm with dual device by multipleprocess
+# Author: Sheng-Ru Zeng
+
 import os
 import sys
 import subprocess
 import time
-# from threading import Thread
+from threading import Timer
 import multiprocessing
 from multiprocessing import Process
-# import signal
 import datetime as dt
 import argparse
 import json
 import re
-# import pandas as pd
 import numpy as np
 import random
 
@@ -18,65 +19,60 @@ import random
 import xgboost as xgb
 import catboost as cb
 
+# Import MobileInsight modules
+from mobile_insight.monitor import OnlineMonitor
+from mobile_insight.analyzer import MyAnalyzer
+
+# HO profile needing
+from collections import namedtuple
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Predicter
 class Predicter():
 
-    def __init__(self, lte_cls, nr_cls, lte_fst, nr_fst, set_up, rlf):
+    def __init__(self, lte_cls=None, nr_cls=None, lte_fst=None, nr_fst=None, set_up=None, rlf=None):
         
+        self.model_names = []
+        self.file_names = []
+        self.models = {}
         
+        for name, file in zip(['lte_cls', 'nr_cls', 'lte_fst', 'nr_fst', 'set_up', 'rlf'], [lte_cls, nr_cls, lte_fst, nr_fst, set_up, rlf]):
+            if file is None:
+                continue
+            self.model_names.append(name)
+            self.file_names.append(file)
+            # XGB Model 
+            if file.endswith('.json'):
+                self.models[name] = xgb.Booster()
+                self.models[name].load_model(file)
+            # Catboost Model
+            elif file.endswith('cb'):
+                if 'cls' in file:
+                    self.models[name] = cb.CatBoostClassifier()
+                    self.models[name].load_model(file)
+                elif 'fcst' in file:
+                    self.models[name] = cb.CatBoostRegressor()
+                    self.models[name].load_model(file)
         
-        self.lte_clssifier  = xgb.Booster()
-        self.lte_clssifier.load_model(lte_cls)
-
-        # NR Classifier
-        # =================================
-        # self.nr_clssifier  = xgb.Booster()
-        # self.nr_clssifier.load_model(nr_cls)
-        
-        self.nr_clssifier  = cb.CatBoostClassifier()
-        self.nr_clssifier.load_model(nr_cls)
-        # =================================
-        
-        self.lte_forecaster = xgb.Booster()
-        self.lte_forecaster.load_model(lte_fst)
-
-        # NR Forecaster 
-        # =================================
-        # self.nr_forecaster =  xgb.Booster()
-        # self.nr_forecaster.load_model(nr_fst)
-        
-        self.nr_forecaster =  cb.CatBoostRegressor()
-        self.nr_forecaster.load_model(nr_fst)
-        # =================================
-        
-        self.setup_clssifier =  xgb.Booster()
-        self.setup_clssifier.load_model(set_up)
-
-        self.rlf_clssifier =  xgb.Booster()
-        self.rlf_clssifier.load_model(rlf)
-
     def foward(self, x_in):
-
-        x_in_D = xgb.DMatrix(x_in.reshape(1,-1))
         
-        names = ['LTE_HO', 'NR_HO', 'LTE_HO_time', 'NR_HO_time', 'NR_Setup', 'RLF']
-        o1 = self.lte_clssifier.predict(x_in_D)
-
-        o2 = self.nr_clssifier.predict_proba(x_in)[1]
-        # o2 = self.nr_clssifier.predict(x_in_D)
-
-        o3 = self.lte_forecaster.predict(x_in_D)
-        
-        o4 = self.nr_forecaster.predict(x_in)
-        # o4 = self.nr_forecaster.predict(x_in_D)    
-        
-        o5 = self.setup_clssifier.predict(x_in_D)
-        o6 = self.rlf_clssifier.predict(x_in_D)
-        
-        out = [o1,o2,o3,o4,o5,o6]
-        out = {k: v.item() for k, v in zip(names, out)}
+        out = {}
+        for (name, model), file in zip(self.models.items(), self.file_names):
+            if file is None:
+                continue
+            # XGB Model
+            if file.endswith('.json'):
+                x_in_D = xgb.DMatrix(x_in.reshape(1,-1))
+                out[name] = model.predict(x_in_D)[0]
+            # Catboost Model
+            elif file.endswith('cb'):
+                if 'cls' in file: # Classification
+                    out[name] = model.predict_proba(x_in)[1]
+                elif 'fcst' in file: # Regression
+                    out[name] = model.predict(x_in)
         
         return out
-
 
 selected_features = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
                      'num_of_neis','RSRP', 'RSRQ', 'RSRP1','RSRQ1',
@@ -113,8 +109,7 @@ def query_pci_earfcn(dev):
     nr_pci = nr_info.split(',')[3]
     
     return pci, earfcn, band, nr_pci
-
-    
+   
 # Change band function
 def change_band(dev, band, variable_id):
 
@@ -132,7 +127,6 @@ def change_band(dev, band, variable_id):
 
 # show
 HOs = ['LTE_HO', 'MN_HO', 'SN_setup','SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF']
-
 def show_HO(dev, analyzer):
 
     features = analyzer.get_featuredict()
@@ -140,28 +134,27 @@ def show_HO(dev, analyzer):
     
     for k, v in features.items():
         if v == 1:
-            print(f'{dev} HO {k} happened!!!!!')
+            print(f'{dev}: HO {k} happened!!!!!')
 
-def show_predictions(dev, predictions):
-
+def show_predictions(dev, preds):
+    
     thr = 0.5
-    if predictions['LTE_HO'] > thr:
-        v = predictions['LTE_HO_time']
+    if preds['lte_cls'] > thr:
+        v = preds['lte_fst']
         print(f'{dev} Prediction: {v} remaining LTE Ho happen!!!')
-    if predictions['NR_HO'] > thr:
-        v = predictions['NR_HO_time']
+    if preds['nr_cls'] > thr:
+        v = preds['nr_fst']
         print(f'{dev} Prediction: {v} remaining NR Ho happen!!!')
-    if predictions['NR_Setup'] > thr:
+    if preds['set_up'] > thr:
         print(f'{dev} Prediction: Near NR setup!!!')
-    if predictions['RLF'] > thr:
+    if preds['rlf'] > thr:
         print(f'{dev} Prediction: Near RLF!!!')
-
 
 remain_time_for_cls_model = 2
 
 # Useful function for action design.
 def happened_Events(preds1, preds2):
-
+    
     evt1 = {'LTE_HO': None, 'NR_HO': None, 'NR_Setup': None, 'RLF': None}
     evt2 = {'LTE_HO': None, 'NR_HO': None, 'NR_Setup': None, 'RLF': None}
     
@@ -169,16 +162,16 @@ def happened_Events(preds1, preds2):
     
     for preds, evt in zip([preds1, preds2], [evt1, evt2]):
         
-        if preds['LTE_HO'] > thr:
-            evt['LTE_HO'] = preds['LTE_HO_time']
+        if preds['lte_cls'] > thr:
+            evt['LTE_HO'] = preds['lte_fst']
             
-        if preds['NR_HO'] > thr:
-            evt['NR_HO'] = preds['NR_HO_time']
+        if preds['nr_cls'] > thr:
+            evt['NR_HO'] = preds['nr_fst']
         
-        if preds['NR_Setup'] > thr:
+        if preds['set_up'] > thr:
             evt['NR_Setup'] = remain_time_for_cls_model
         
-        if preds['RLF'] > thr:
+        if preds['rlf'] > thr:
             evt['RLF'] = remain_time_for_cls_model    
     
     return evt1, evt2
@@ -190,7 +183,7 @@ def class_far_close(evt1, evt2):
 
     cls_result = []
     remain_time1, remain_time2 = [], [] 
-    threshold = 3 # Threshold for 
+    threshold = 3 # Threshold for tell if the radio is close to HO
      
     for evt, remain_time in zip([evt1, evt2], [remain_time1, remain_time2]):
     
@@ -221,10 +214,6 @@ def check_difference_less_than_off(list_a, list_b, off):
             if abs(a - b) < off:
                 return True
     return False
-
-from collections import namedtuple
-import pandas as pd
-import matplotlib.pyplot as plt
 
 def evaluate_plr(radio1, radio2, predict_time=10, spr=500, show_fig=False):
     
@@ -291,50 +280,20 @@ def evaluate_plr(radio1, radio2, predict_time=10, spr=500, show_fig=False):
 
     return OP(eval_plr[0], eval_plr[1]), OP(eval_plr1[0], eval_plr1[1]), OP(eval_plr2[0], eval_plr2[1])
 
-
 def Action(eval_plr, eval_plr1, eval_plr2):
-
-    global setting1, setting2
-    
-    choices = {'3:7', '7:8', '3:8'}
-    choices1, choices2 = choices - {setting1}, choices - {setting2}
-    choice1, choice2 = random.sample(choices1, 1)[0], random.sample(choices2, 1)[0]
-    
-    # dl_thr, ul_thr = 0.5, 0.1
-    dl_thr, ul_thr = 0.18, 0.1
-
-    if (eval_plr.dl > dl_thr):
-        
-        if (eval_plr1.dl > eval_plr2.dl):
-            change_band(dev1, choice1, 1)
-        else:
-            change_band(dev2, choice2, 2)
-    
-    elif (eval_plr.ul > ul_thr):
-        
-        if (eval_plr1.ul > eval_plr2.ul):
-            change_band(dev1, choice1, 1)
-        else:
-            change_band(dev2, choice2, 2)    
+    pass
     
 # Online features collected and ML model inferring.
 def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
     
-    import xgboost as xgb
-    from threading import Timer
-    
-    # Import MobileInsight modules
-    from mobile_insight.monitor import OnlineMonitor
-    from mobile_insight.analyzer import MyAnalyzer
-    
     # Loading Model
-    lte_classifier = 'model/lte_HO_cls_xgb.json'
-    nr_classifier = 'model/nr_HO_cls_cb'
-    lte_forecaster = 'model/lte_HO_fcst_xgb.json'
-    nr_forecaster = 'model/nr_HO_fst_cb'
-    setup_classifier = 'model/setup_cls_xgb.json'
-    rlf_classifier = 'model/rlf_cls_xgb.json'
-    predictor = Predicter(lte_classifier, nr_classifier, lte_forecaster, nr_forecaster, setup_classifier, rlf_classifier)
+    # lte_classifier = os.path.join(parent_folder, 'model/lte_HO_cls_xgb.json')
+    # nr_classifier = os.path.join(parent_folder, 'model/nr_HO_cls_cb')
+    # lte_forecaster = os.path.join(parent_folder, 'model/lte_HO_fcst_xgb.json')
+    # nr_forecaster = os.path.join(parent_folder, 'model/nr_HO_fcst_cb')
+    # setup_classifier = os.path.join(parent_folder, 'model/setup_cls_xgb.json')
+    rlf_classifier = os.path.join(parent_folder, 'model/rlf_cls_xgb.json')
+    predictor = Predicter(rlf = rlf_classifier)
 
     src = OnlineMonitor()
     src.set_serial_port(ser)  # the serial port to collect the traces
@@ -344,12 +303,18 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
     myanalyzer = MyAnalyzer()
     myanalyzer.set_source(src)
 
-    save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f"record_{dev}_{t}.csv")
+    save_path = os.path.join('/home/wmnlab/Data/record', f"record_{dev}_{t}.csv")
     f_out = open(save_path, 'w')
     f_out.write(','.join(['LTE_HO, MN_HO', 'SN_setup', 'SN_Rel', 'SN_HO', 'RLF', 'SCG_RLF',
                           'num_of-neis', 'RSRP', 'RSRQ', 'RSRP1', 'RSRQ1',
-                          'nr-RSRP', 'nr-RSRQ', 'nr-RSRP1', 'nr-RSRQ1',
-                          'lte_cls','nr_cls','lte_fst','nr_fst','setup_cls','rlf_cls']) + '\n')
+                          'nr-RSRP', 'nr-RSRQ', 'nr-RSRP1', 'nr-RSRQ1'] +
+                          list(predictor.models.keys()) ) + '\n')
+   
+    global count, x_in
+    count = 1
+    x_in = np.array([])
+    
+    models_num = len(predictor.models)
     
     def run_prediction():
         
@@ -374,7 +339,7 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
 
             # record
             w = [str(e) for e in list(features)]
-            try: f_out.write(','.join(w + ['']*6) + ',\n') 
+            try: f_out.write(','.join(w + [''] * models_num) + '\n') 
             except: pass
             
         else:
@@ -386,15 +351,9 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
             w = [str(e) for e in list(features) + list(out.values())]
             try: f_out.write(','.join(w) + ',\n')
             except: pass
-            
-            output_queue.put([dev, out])
-                
+            output_queue.put([dev, out])     
 
         Timer(1, run_prediction).start()
-
-    global count, x_in
-    count = 1
-    x_in = np.array([])
     
     start_sync_event.wait()
     print(f'Start {dev}.')
@@ -411,9 +370,10 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
         print(f'End {dev}.')
 
 if __name__ == "__main__":
-
-    global setting1, setting2, rest
-
+    
+    script_folder = os.path.dirname(os.path.abspath(__file__))
+    parent_folder = os.path.dirname(script_folder)
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--device", type=str, nargs='+', help="device: e.g. qc00 qc01")
     parser.add_argument("-b", "--baudrate", type=int, help='baudrate', default=9600)
@@ -421,7 +381,22 @@ if __name__ == "__main__":
     baudrate = args.baudrate
     dev1, dev2 = args.device[0], args.device[1]
 
-    with open('device_to_serial.json', 'r') as f:
+    # global parameters and some other parameters
+    os.chdir("../../../../modem-utilities/") # cd modem-utilities folder to use AT command.
+    global setting1, setting2, rest
+    setting1, setting2 = query_band(dev1), query_band(dev2)
+    time_seq = 20     ### Read Coefficients
+    rest = 0
+    rest_time = 5
+    offset_too_close = 1
+    offset_eval = 0.05
+    all_band_choice = [ '3', '7', '8', '1:3:7:8', 
+                       '1:3', '3:7', '3:8', '7:8', '1:7', '1:8',
+                       '1:3:7', '1:3:8', '1:7:8', '3:7:8']
+    radical = False
+    
+    d2s_path = os.path.join(parent_folder, 'device_to_serial.json')
+    with open(d2s_path, 'r') as f:
         device_to_serial = json.load(f)
         ser1, ser2 = device_to_serial[dev1], device_to_serial[dev2]
         ser1 = os.path.join("/dev/serial/by-id", f"usb-Quectel_RM500Q-GL_{ser1}-if00-port0")
@@ -429,16 +404,14 @@ if __name__ == "__main__":
 
     print(dev1, dev2, ser1, ser2)
     
-    # Record time
+    # Record time for save file name
     now = dt.datetime.today()
     t = '-'.join([str(x) for x in[ now.year%100, now.month, now.day, now.hour, now.minute]])
 
-    ### Read Coefficients
-    time_seq = 20
-
+    
     # # Read Handover Profile
-    coef_ul = pd.read_pickle('./HO_profiles/coef_ul.pkl')
-    coef_dl = pd.read_pickle('./HO_profiles/coef_dl.pkl')
+    coef_ul = pd.read_pickle(os.path.join(parent_folder, 'data/coef_ul.pkl'))
+    coef_dl = pd.read_pickle(os.path.join(parent_folder, 'data/coef_dl.pkl'))
 
     # multipleprocessing
     output_queue = multiprocessing.Queue()
@@ -452,20 +425,6 @@ if __name__ == "__main__":
     
     p2 = Process(target=device_running, args=[dev2, ser2, output_queue, start_sync_event, SHOW_HO])
     p2.start()
-
-    # cd modem-utilities folder to use AT command.
-    os.chdir("../../../modem-utilities/")
-    
-    # Global parameters and some other parameters
-    setting1, setting2 = query_band(dev1), query_band(dev2)
-    rest = 0
-    rest_time = 5
-    offset_too_close = 1
-    offset_eval = 0.05
-    all_band_choice = [ '3', '7', '8', '1:3:7:8', 
-                       '1:3', '3:7', '3:8', '7:8', '1:7', '1:8',
-                       '1:3:7', '1:3:8', '1:7:8', '3:7:8']
-    radical = False
     
     # Sync two device.
     time.sleep(3)
@@ -490,8 +449,7 @@ if __name__ == "__main__":
                 out2 = outs[dev2]
                 
                 # Show prediction result during experiment. 
-                # show_predictions(dev1, out1)
-                # show_predictions(dev2, out2)
+                # show_predictions(dev1, out1); show_predictions(dev2, out2)
                 
                 ################ Action Here ################
                 # Do nothing if too close to previous action.
@@ -502,7 +460,7 @@ if __name__ == "__main__":
                     
                     evt1, evt2 = happened_Events(out1, out2)
                     case1, remain_time1, case2, remain_time2 = class_far_close(evt1, evt2)    
-                    # Format of info: (pci, earfcn, band, nr_pci)
+                    # Format of info: (pci, earfcn, band, nr_pci) under 5G NSA
                     try:
                         info1, info2 = query_pci_earfcn(dev1), query_pci_earfcn(dev2)
                     except:
@@ -579,14 +537,9 @@ if __name__ == "__main__":
                         elif eval_plr1.dl < eval_plr2.dl:
                             
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
-                            choice =  random.sample(choices, 1)[0]
+                            choice =  random.sample(choices, 1)[0]       
                             print('Case 2 close 2 change!!!')
-                            change_band(dev2, choice, 2)       
-                    
-                    # eval_plr, eval_plr1, eval_plr2 = evaluate_plr(evt1, evt2)
-                    # print(eval_plr, eval_plr1, eval_plr2)
-                    # Action(eval_plr, eval_plr1, eval_plr2)
-
+                            change_band(dev2, choice, 2)
                 #############################################
 
             end = time.time()
