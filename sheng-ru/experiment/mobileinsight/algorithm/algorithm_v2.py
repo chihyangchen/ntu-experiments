@@ -375,7 +375,8 @@ if __name__ == "__main__":
                             
                     elif case1 == 'Close' and case2 == 'Close':
                         choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
-                        choice =  random.sample(choices, 1)[0]    
+                        choice =  random.sample(choices, 1)[0]
+                        print(f'2 close')
                         if prob1 > prob2:
                             change_band(dev1, choice, 1)
                         else:

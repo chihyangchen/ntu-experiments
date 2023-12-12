@@ -4,12 +4,9 @@ import os
 import datetime as dt
 import argparse
 import json
-import threading
-# import multiprocessing
-import time
 
 # Import MobileInsight modules
-from mobile_insight.analyzer import *
+# from mobile_insight.analyzer import *
 from mobile_insight.monitor import OnlineMonitor
 # from mobile_insight.analyzer import MyAnalyzer
 
@@ -22,12 +19,16 @@ if __name__ == "__main__":
 
     baudrate = args.baudrate
     dev = args.device
-    f = open('device_to_serial.json')
-    device_to_serial = json.load(f)
-    ser = device_to_serial[dev]
-    f.close()
-
-    ser = os.path.join("/dev/serial/by-id", f"usb-Quectel_RM500Q-GL_{ser}-if00-port0")
+    script_folder = os.path.dirname(os.path.abspath(__file__))
+    parent_folder = os.path.dirname(script_folder)
+    d2s_path = os.path.join(parent_folder, 'device_to_serial.json')
+    with open(d2s_path, 'r') as f:
+        device_to_serial = json.load(f)
+        ser = device_to_serial[dev]
+        if dev.startswith('sm'):
+            ser = os.path.join("/dev/serial/by-id", f"usb-SAMSUNG_SAMSUNG_Android_{ser}-if00-port0")
+        elif dev.startswith('qc'):
+            ser = os.path.join("/dev/serial/by-id", f"usb-Quectel_RM500Q-GL_{ser}-if00-port0")
 
     # Initialize a 3G/4G/5G monitor
     src = OnlineMonitor()
@@ -44,7 +45,7 @@ if __name__ == "__main__":
     # Enable 3G/4G/5G RRC (radio resource control) monitoring
     src.enable_log("5G_NR_RRC_OTA_Packet")
     src.enable_log("LTE_RRC_OTA_Packet")
-    # src.enable_log("WCDMA_RRC_OTA_Packet")
+    src.enable_log("WCDMA_RRC_OTA_Packet")
     # src.enable_log("5G_NR_PDCP_UL_Control_Pdu")
     # src.enable_log("5G_NR_L2_UL_TB")
     # src.enable_log("5G_NR_L2_UL_BSR")
@@ -53,8 +54,8 @@ if __name__ == "__main__":
     # src.enable_log("5G_NR_MAC_UL_Physical_Channel_Schedule_Report")
     # src.enable_log("5G_NR_MAC_PDSCH_Stats")
     # src.enable_log("5G_NR_MAC_RACH_Trigger")
-    # src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
-    # src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
+    src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
+    src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
 
     # Myanalyzer
     # myanalyzer = MyAnalyzer()
@@ -93,9 +94,9 @@ if __name__ == "__main__":
     # lte_pdcp_analyzer.set_source(src)
 
     # Dump the messages to std I/O. Comment it if it is not needed.
-    dumper = MsgLogger()
-    dumper.set_source(src)
-    dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
+    # dumper = MsgLogger()
+    # dumper.set_source(src)
+    # dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
     
     # self defined analyzer
     # save_path = '/home/wmnlab/test.csv'
@@ -104,22 +105,3 @@ if __name__ == "__main__":
 
     # Start the monitoring
     src.run()
-
-    # def run():
-    #     src.run()
-
-    # t = threading.Thread(target=run, daemon=True)
-    # t.start()
-
-    # time.sleep(1)
-    # myanalyzer.reset()
-    
-    # while True:
-    #     # print(myanalyzer.RRC_DICT)
-    #     myanalyzer.to_featuredict()
-    #     S = myanalyzer.get_featuredict()
-    #     print('=====================================')
-    #     for k in S:
-    #         print(k, ':', S[k])
-    #     myanalyzer.reset()
-    #     time.sleep(1)
