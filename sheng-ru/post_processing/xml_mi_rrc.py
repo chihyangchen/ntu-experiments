@@ -414,8 +414,6 @@ def main(fname):
                 PCI = "-"
                 Freq = '-'
 
-            
-
             if type_id == "LTE_RRC_Serv_Cell_Info": # 處理serv cell info
                 PCI = soup.find(key="Cell ID").get_text()
                 DL_f = soup.find(key="Downlink frequency").get_text()
