@@ -13,21 +13,15 @@ import subprocess
 import signal
 from device_to_port import device_to_port
 
-
 #=================argument parsing======================
-parser = argparse.ArgumentParser()  
-parser.add_argument("-n", "--number_client", type=int,
-                    help="number of client", default=1)
-parser.add_argument("-d", "--devices", type=str, nargs='+',   # input list of devices sep by 'space'
-                    help="list of devices", default=["unam"])
-parser.add_argument("-p", "--ports", type=str, nargs='+',     # input list of port numbers sep by 'space'
-                    help="ports to bind")
-parser.add_argument("-b", "--bitrate", type=str,
-                    help="target bitrate in bits/sec (0 for unlimited)", default="1M")
-parser.add_argument("-l", "--length", type=str,
-                    help="length of buffer to read or write in bytes (packet size)", default="250")
-parser.add_argument("-t", "--time", type=int,
-                    help="time in seconds to transmit for (default 1 hour = 3600 secs)", default=3600)
+parser = argparse.ArgumentParser() 
+parser.add_argument("-s", "--server_ip", type=str, help="server ip", default='0.0.0.0') 
+parser.add_argument("-n", "--number_client", type=int, help="number of client", default=1)
+parser.add_argument("-d", "--devices", type=str, nargs='+', required=True, help="list of devices", default=["unam"])
+parser.add_argument("-p", "--ports", type=str, nargs='+', help="ports to bind")
+parser.add_argument("-b", "--bitrate", type=str, help="target bitrate in bits/sec (0 for unlimited)", default="1M")
+parser.add_argument("-l", "--length", type=str, help="length of buffer to read or write in bytes (packet size)", default="250")
+parser.add_argument("-t", "--time", type=int, help="time in seconds to transmit for (default 1 hour = 3600 secs)", default=3600)
 args = parser.parse_args()
 
 # Get argument devices
@@ -51,13 +45,7 @@ if not args.ports:
         ports.append((device_to_port[device][0], device_to_port[device][1]))  
 else:
     for port in args.ports:
-        if '-' in port:
-            start = int(port[:port.find('-')])
-            stop = int(port[port.find('-') + 1:]) + 1
-            for i in range(start, stop):
-                ports.append(i)
-            continue
-        ports.append(int(port))
+        ports.append([int(port), int(port)+1])
 
 print(devices)
 print(ports)
@@ -80,19 +68,43 @@ number_client = args.number_client
 expected_packet_per_sec = bandwidth / (length_packet << 3)
 sleeptime = 1.0 / expected_packet_per_sec
 
-
-#=================other variables========================
-HOST = '0.0.0.0' # 140.112.20.183
-
-#=================global variables=======================
+# global variables
+HOST = args.server_ip
 stop_threads = False
 udp_addr = {}
 
 # Function define
+def signal_handler(signum, frame):
+
+    print("Inner Signal: ",signum)
+
+    data = 'CLOSE'
+    conn.send(data.encode())
+    
+    global stop_threads
+    stop_threads = True
+
+    # Kill tcp control
+    s_tcp.close()
+    print('TCP control closed')
+
+    # Kill transmit process
+    p_tx.terminate()
+    p_tx.join()
+    print('p_tx trminated')
+
+    # Kill time synchronizatoin subprocess
+    sync_proc.terminate()
+    print("time sync socket closed")
+
+    for tcpproc in tcpproc_list:
+        os.killpg(os.getpgid(tcpproc.pid), signal.SIGTERM)
+
+    exit(0)
 
 def fill_udp_addr(s):
 
-    indata, addr = s.recvfrom(1024)
+    _, addr = s.recvfrom(1024)
     udp_addr[s] = addr 
 
 def receive(s, dev, port):
@@ -106,10 +118,9 @@ def receive(s, dev, port):
 
     while not stop_threads:
         try:
-            #receive data, update client's addresses (after receiving, server know where to transmit)
-            indata, addr = s.recvfrom(1024)
-            # udp_addr[s] = addr 
-
+            #receive data
+            indata, _ = s.recvfrom(1024)
+           
             try: start_time
             except NameError:
                 start_time = time.time()
@@ -175,6 +186,20 @@ def transmit(sockets):
     print("---transmission timeout---")
     print("transmit", seq, "packets")
 
+# open subprocess of time synchronizatoin
+dir_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(dir_path, "time_sync.py")
+sync_proc =  subprocess.Popen([f"exec python3 {file_path} -s"], shell=True, preexec_fn = os.setpgrp)
+
+# TCP control socket
+s_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s_tcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s_tcp.bind((HOST, 3299))
+s_tcp.listen(5)
+print('wait for TCP connection...')
+conn, addr = s_tcp.accept()
+print('connected by ' + str(addr))
+
 # Set up UL receive /  DL transmit sockets for multiple clients
 rx_sockets = []
 tx_sockets = []
@@ -224,30 +249,60 @@ for s, dev, port in zip(rx_sockets, devices, ports):
 
 # Start DL transmission multipleprocessing
 p_tx = multiprocessing.Process(target=transmit, args=(tx_sockets,), daemon=True)
-# start = input('Start transmission? (y/n) ')
-# if start != 'y':
-#     sys.exit()
 p_tx.start()
 
 # Main process waiting...
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGTSTP, signal_handler)
+
 try:
     
-    while True:
-        time.sleep(10)
-
-except KeyboardInterrupt:
+    indata = conn.recv(1024)
+    print('received ' + indata.decode() + ' command from client')
 
     stop_threads = True
     
+    # Kill tcp control
+    s_tcp.close()
+    print('TCP control closed')
+
     # Kill transmit process
     p_tx.terminate()
-    time.sleep(1)
+    p_tx.join()
+    print('p_tx trminated')
 
-    # Kill tcpdump process
-    print('Killing tcpdump process...')
+    # Kill time synchronizatoin subprocess
+    sync_proc.terminate()
+    print("time sync socket closed")
+
     for tcpproc in tcpproc_list:
         os.killpg(os.getpgid(tcpproc.pid), signal.SIGTERM)
+
+except SystemExit as e: print('Successfully closed.')
+except BaseException as e:
+
+    print(e)
+
+    stop_threads = True
+    data = 'CLOSE'
+    conn.send(data.encode())
     
-    time.sleep(3)
-    print('Successfully closed.')
-    sys.exit()
+    # Kill tcp control
+    s_tcp.close()
+    print('TCP control closed')
+
+    # Kill transmit process
+    p_tx.terminate()
+    p_tx.join()
+    print('p_tx trminated')
+
+    # Kill time synchronizatoin subprocess
+    sync_proc.terminate()
+    # os.killpg(os.getpgid(sync_proc.pid), signal.SIGINT)
+    print("time sync socket closed")
+    
+    for tcpproc in tcpproc_list:
+        os.killpg(os.getpgid(tcpproc.pid), signal.SIGTERM)
+
+    print('Error, Closed.')
