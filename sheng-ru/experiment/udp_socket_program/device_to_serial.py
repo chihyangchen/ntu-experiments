@@ -1,13 +1,18 @@
 device_to_serial = {
-    "sm00":"R5CRA1ET5KB",
-    "sm01":"R5CRA1D2MRJ",
+    # SAMSUMNG
+    "sm00":"R5CR20FDXHK",
+    "sm01":"R5CR30P9Z8Y",
     "sm02":"R5CRA1GCHFV",
     "sm03":"R5CRA1JYYQJ",
     "sm04":"R5CRA1EV0XH",
     "sm05":"R5CRA1GBLAZ",
     "sm06":"R5CRA1ESYWM",
     "sm07":"R5CRA1ET22M",
-    "sm08":"R5CRA2EGJ5X",
+    "sm08":"R5CRA1D23QK",
+    "sm09":"R5CRA2EGJ5X",
+    "sm10":"R5CRA1ET5KB",
+    "sm11":"R5CRA1D2MRJ",
+    # Xiaomi
     "xm00":"73e11a9f",
     "xm01":"491d5141",
     "xm02":"790fc81d",
@@ -26,6 +31,7 @@ device_to_serial = {
     "xm15":"64545f94",
     "xm16":"613a273a",
     "xm17":"fe3df56f",
+    # RM500Q-GL
     "qc00":"76857c8" ,
     "qc01":"bc4587d" ,
     "qc02":"5881b62f",
@@ -33,15 +39,20 @@ device_to_serial = {
 }
 
 serial_to_device = {
-    "R5CRA1ET5KB":"sm00",
-    "R5CRA1D2MRJ":"sm01",
+    # SAMSUMNG
+    "R5CR20FDXHK":"sm00",
+    "R5CR30P9Z8Y":"sm01",
     "R5CRA1GCHFV":"sm02",
     "R5CRA1JYYQJ":"sm03",
     "R5CRA1EV0XH":"sm04",
     "R5CRA1GBLAZ":"sm05",
     "R5CRA1ESYWM":"sm06",
     "R5CRA1ET22M":"sm07",
-    "R5CRA2EGJ5X":"sm08",
+    "R5CRA1D23QK":"sm08",
+    "R5CRA2EGJ5X":"sm09",
+    "R5CRA1ET5KB":"sm10",
+    "R5CRA1D2MRJ":"sm11",
+    # Xiaomi
     "73e11a9f":"xm00",
     "491d5141":"xm01",
     "790fc81d":"xm02",
@@ -60,8 +71,9 @@ serial_to_device = {
     "64545f94":"xm15",
     "613a273a":"xm16",
     "fe3df56f":"xm17",
+    # RM500Q-GL
     "76857c8" :"qc00",
-    "bc4587d" :"qc01",   
+    "bc4587d" :"qc01",
     "5881b62f":"qc02",
     "32b2bdb2":"qc03",
 }

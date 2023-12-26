@@ -6,18 +6,17 @@ import os
 
 #=================argument parsing======================
 parser = argparse.ArgumentParser()
-parser.add_argument("-d", "--device", type=str,   
-                    help="device", default=["unam"])
+parser.add_argument("-d", "--device", type=str, help="device", default=["unam"])
 args = parser.parse_args()
 device = args.device
 
-serial = device_to_serial[device]
+serial = device_to_serial[device]   
 
-su_cmd = 'cd sdcard/UDP_Phone && cp ./tools/* /bin && chmod +x /bin/*'
+su_cmd = 'cd sdcard/UDP_Phone && "mount -o rw,remount /system/bin" && cp ./tools/* /bin'
 adb_cmd = f"su -c '{su_cmd}'"
 p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
 time.sleep(1)
-su_cmd = 'chmod +x /bin/*'
+su_cmd = 'chmod +x /bin/iperf3 /bin/python3 /bin/tcpdump'
 adb_cmd = f"su -c '{su_cmd}'"
 p = subprocess.Popen([f'adb -s {serial} shell "{adb_cmd}"'], shell=True, preexec_fn = os.setpgrp)
 time.sleep(1)

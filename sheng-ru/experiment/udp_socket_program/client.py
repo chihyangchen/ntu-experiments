@@ -215,7 +215,7 @@ p_sync.start()
 # TCP control socket
 s_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s_tcp.connect((HOST, 3299))
-
+time.sleep(3)
 
 # Create DL receive and UL transmit multi-client sockets
 rx_sockets = []

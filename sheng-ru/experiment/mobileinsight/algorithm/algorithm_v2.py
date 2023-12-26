@@ -21,7 +21,7 @@ import catboost as cb
 
 # Import MobileInsight modules
 from mobile_insight.monitor import OnlineMonitor
-from mobile_insight.analyzer import MyAnalyzer
+from mobile_insight.analyzer import MyAnalyzer, TimeSyncAnalyzer
 
 # Predicter
 class Predicter():
@@ -120,6 +120,10 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
     src.save_log_as(save_path)
     myanalyzer = MyAnalyzer()
     myanalyzer.set_source(src)
+    
+    save_path = f'/home/wmnlab/Data/TimeSync/TimeSync_{dev}_{t}.csv'
+    timesyncanalyzer = TimeSyncAnalyzer(save_path=save_path)
+    timesyncanalyzer.set_source(src)
 
     save_path = os.path.join('/home/wmnlab/Data/record', f"record_{dev}_{t}.csv")
     f_out = open(save_path, 'w')
@@ -190,7 +194,7 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
 # Show prediction result if event is predicted.
 def show_predictions(dev, preds):
     
-    thr = 0.5
+    thr = 0.2
     if preds['rlf'] > thr:
         print(dt.datetime.now())
         print(f'{dev} Prediction: Near RLF!!!')
@@ -202,7 +206,7 @@ def class_far_close(preds1, preds2):
     case1, case2 = 'Far', 'Far'
     prob1, prob2 = 0, 0
     # t_close = 3 # Threshold time for tell if the radio is close to HO
-    threshold = 0.5 # Threshold for binary cls model.
+    threshold = 0.2 # Threshold for binary cls model.
     
     for k in list(preds1.keys()):
         
@@ -263,7 +267,13 @@ if __name__ == "__main__":
     dev1, dev2 = args.device[0], args.device[1]
     
     # global parameters and some other parameters
-    os.chdir("../../../../modem-utilities/") # cd modem-utilities folder to use AT command.
+    current_script_path = os.path.abspath(__file__)
+    dir_name = os.path.dirname(current_script_path)
+    for i in range(4):
+        dir_name = os.path.dirname(dir_name)
+    dir_name = os.path.join(dir_name, 'modem-utilities')
+    os.chdir(dir_name) # cd modem-utilities folder to use AT command.
+    
     global setting1, setting2, rest
     setting1, setting2 = query_band(dev1), query_band(dev2)
     time_seq = 20 ### Read Coefficients

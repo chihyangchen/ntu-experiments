@@ -43,8 +43,10 @@ if __name__ == "__main__":
     # src.enable_log_all()
 
     # Enable 3G/4G/5G RRC (radio resource control) monitoring
-    # src.enable_log("5G_NR_RRC_OTA_Packet")
-    # src.enable_log("LTE_RRC_OTA_Packet")
+    src.enable_log("5G_NR_RRC_OTA_Packet")
+    src.enable_log("LTE_RRC_OTA_Packet")
+    src.enable_log("WCDMA_RRC_OTA_Packet")
+    src.enable_log("LTE_RRC_Serv_Cell_Info")
     # src.enable_log("WCDMA_RRC_OTA_Packet")
     # src.enable_log("5G_NR_PDCP_UL_Control_Pdu")
     # src.enable_log("5G_NR_L2_UL_TB")
@@ -54,8 +56,8 @@ if __name__ == "__main__":
     # src.enable_log("5G_NR_MAC_UL_Physical_Channel_Schedule_Report")
     # src.enable_log("5G_NR_MAC_PDSCH_Stats")
     # src.enable_log("5G_NR_MAC_RACH_Trigger")
-    # src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
-    # src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
+    src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
+    src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
 
     # 5G NR RRC analyzer
     # nr_rrc_analyzer = NrRrcAnalyzer()
@@ -95,13 +97,13 @@ if __name__ == "__main__":
     # dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
     
     # self defined analyzer
-    save_path = '/home/wmnlab/test1.csv'
-    myanalyzer = MyAnalyzer(save_path)
-    myanalyzer.set_source(src)
+    # save_path = '/home/wmnlab/test1.csv'
+    # myanalyzer = MyAnalyzer(save_path)
+    # myanalyzer.set_source(src)
     
-    save_path = '/home/wmnlab/test2.csv'
-    timesyncanalyzer = TimeSyncAnalyzer(save_path=save_path)
-    timesyncanalyzer.set_source(src)
+    # save_path = '/home/wmnlab/test2.csv'
+    # timesyncanalyzer = TimeSyncAnalyzer(save_path=save_path)
+    # timesyncanalyzer.set_source(src)
 
     # Start the monitoring
     src.run()
