@@ -194,7 +194,7 @@ def device_running(dev, ser, output_queue, start_sync_event, SHOW_HO=False):
 # Show prediction result if event is predicted.
 def show_predictions(dev, preds):
     
-    thr = 0.2
+    thr = 0.5
     if preds['rlf'] > thr:
         print(dt.datetime.now())
         print(f'{dev} Prediction: Near RLF!!!')
@@ -206,7 +206,7 @@ def class_far_close(preds1, preds2):
     case1, case2 = 'Far', 'Far'
     prob1, prob2 = 0, 0
     # t_close = 3 # Threshold time for tell if the radio is close to HO
-    threshold = 0.2 # Threshold for binary cls model.
+    threshold = 0.5 # Threshold for binary cls model.
     
     for k in list(preds1.keys()):
         
@@ -279,9 +279,10 @@ if __name__ == "__main__":
     time_seq = 20 ### Read Coefficients
     rest = 0
     rest_time = 10
-    all_band_choice = [ '3', '7', '8', '1:3:7:8', 
-                       '1:3', '3:7', '3:8', '7:8', '1:7', '1:8',
-                       '1:3:7', '1:3:8', '1:7:8', '3:7:8']
+    # all_band_choice = [ '3', '7', '8', '1:3:7:8', 
+    #                    '1:3', '3:7', '3:8', '7:8', '1:7', '1:8',
+    #                    '1:3:7', '1:3:8', '1:7:8', '3:7:8']
+    all_band_choice = ['3', '7', '8', '3:7', '3:8', '7:8', '3:7:8']
 
     d2s_path = os.path.join(parent_folder, 'device_to_serial.json')
     with open(d2s_path, 'r') as f:
@@ -346,13 +347,11 @@ if __name__ == "__main__":
                     # Format of info: (pci, earfcn, band, nr_pci) under 5G NSA; # (pci, earfcn, band) under LTE
                     try:
                         info1, info2 = query_pci_earfcn(dev1), query_pci_earfcn(dev2)
+                        info1_, info2_ = info1, info2
                         if info1 is None or info2 is None: raise
                     except:
-                        print('Query Failed.')
-                        end = time.time()
-                        if 1-(end-start) > 0:
-                            time.sleep(1-(end-start))
-                        continue
+                        print('Query Failed. Use previous one.')
+                        info1, info2 = info1_, info2_
                     
                     if case1 == 'Far' and case2 == 'Far':
                         # if info1[0] == info2[0]: # Same PCI

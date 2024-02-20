@@ -18,6 +18,9 @@ case "$1" in
     qc03)
         DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
         ;;
+    qc06)
+        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_539a30bb-if03-port0"
+        ;;
     esac
 }
 
@@ -39,7 +42,10 @@ case "$1" in
         DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_5881b62f-if00-port0"
         ;;
     qc03)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if00-port0"
+        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if00-port0"
+        ;;
+    qc06)
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_539a30bb-if00-port0"
         ;;
     esac
 
