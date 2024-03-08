@@ -199,6 +199,7 @@ s_tcp.listen(5)
 print('wait for TCP connection...')
 conn, addr = s_tcp.accept()
 print('connected by ' + str(addr))
+time.sleep(3)
 
 # Set up UL receive /  DL transmit sockets for multiple clients
 rx_sockets = []

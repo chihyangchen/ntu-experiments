@@ -149,8 +149,8 @@ def get_event_paras(f, eventId, l):
 
 def main(fname):
     print(fname)
-    f = open(os.path.join(sys.argv[1], fname), encoding="utf-8")
-    f_out = os.path.join(sys.argv[1], fname[:-4]+'_rrc.csv')
+    f = open(fname, encoding="utf-8")
+    f_out = fname[:-4]+'_rrc.csv'
     delete = False
     f2 = open(f_out , 'w')
     print("rrc >>>>>")
@@ -682,7 +682,7 @@ if __name__ == "__main__":
         for fname in filenames:
             if fname[-4:] != '.txt':
                 continue
-            main(fname)
+            main(os.path.join(dirname, fname))
 
     elif sys.argv[1].endswith(".txt"):
         fname = sys.argv[1]
