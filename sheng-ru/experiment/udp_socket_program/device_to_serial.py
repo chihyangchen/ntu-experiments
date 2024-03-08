@@ -36,6 +36,8 @@ device_to_serial = {
     "qc01":"bc4587d" ,
     "qc02":"5881b62f",
     "qc03":"32b2bdb2",
+    "qc05":"e2c26ab7",
+    "qc06":"539a30bb"
 }
 
 serial_to_device = {
@@ -76,4 +78,6 @@ serial_to_device = {
     "bc4587d" :"qc01",
     "5881b62f":"qc02",
     "32b2bdb2":"qc03",
+    "e2c26ab7":"qc05",
+    "539a30bb":"qc06"
 }

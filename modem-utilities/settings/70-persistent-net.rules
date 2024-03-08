@@ -40,5 +40,6 @@ SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="76857c8" , NAME="qc00"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="bc4587d" , NAME="qc01"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="5881b62f", NAME="qc02"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="32b2bdb2", NAME="qc03"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="e2c26ab7", NAME="qc05"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="539a30bb", NAME="qc06"
 

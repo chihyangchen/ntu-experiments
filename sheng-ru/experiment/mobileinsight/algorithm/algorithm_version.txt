@@ -1,2 +1,3 @@
 v1: Follow by the Professor's advice first algorithm.
-v2: 
+v2: Similar idea to that of version1, except forcus on preventing RLF from happening.
+v3: v2 but change the predictor.

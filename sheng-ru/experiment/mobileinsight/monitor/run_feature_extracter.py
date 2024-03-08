@@ -4,11 +4,12 @@ import os
 import datetime as dt
 import argparse
 import json
+import threading
+import time
 
 # Import MobileInsight modules
 # from mobile_insight.analyzer import *
 from mobile_insight.monitor import OnlineMonitor
-from mobile_insight.analyzer import MyAnalyzer, TimeSyncAnalyzer
 from mobile_insight.analyzer import FeatureExtracter
 
 if __name__ == "__main__":
@@ -40,43 +41,32 @@ if __name__ == "__main__":
     savepath = os.path.join("/home/wmnlab/Data/mobileinsight", f"diag_log_{dev}_{t}.mi2log")
     src.save_log_as(savepath)
 
-    # Enable all
-    # src.enable_log_all()
-
-    # Enable 3G/4G/5G RRC (radio resource control) monitoring
-    # src.enable_log("5G_NR_RRC_OTA_Packet")
-    # src.enable_log("LTE_RRC_OTA_Packet")
-    # src.enable_log("WCDMA_RRC_OTA_Packet")
-    # src.enable_log("LTE_RRC_Serv_Cell_Info")
-    # # src.enable_log("WCDMA_RRC_OTA_Packet")
-    # src.enable_log("5G_NR_ML1_Searcher_Measurement_Database_Update_Ext")
-    # src.enable_log('LTE_PHY_Connected_Mode_Intra_Freq_Meas')
-
-    # 5G NR RRC analyzer
-    # nr_rrc_analyzer = NrRrcAnalyzer()
-    # nr_rrc_analyzer.set_source(src)  # bind with the monitor
-
-    # 4G RRC analyzer
-    # lte_rrc_analyzer = LteRrcAnalyzer()
-    # lte_rrc_analyzer.set_source(src)  # bind with the monitor
-
-    # 3G RRC analyzer
-    # wcdma_rrc_analyzer = WcdmaRrcAnalyzer()
-    # wcdma_rrc_analyzer.set_source(src)  # bind with the monitor
-
     # Dump the messages to std I/O. Comment it if it is not needed.
     # dumper = MsgLogger()
     # dumper.set_source(src)
     # dumper.set_decoding(MsgLogger.XML)  # decode the message as xml
     
     # self defined analyzer
-    # save_path = '/home/wmnlab/test1.csv'
-    # myanalyzer = MyAnalyzer(save_path)
-    # myanalyzer.set_source(src)
-    
-    # save_path = '/home/wmnlab/test2.csv'
-    # timesyncanalyzer = TimeSyncAnalyzer(save_path=save_path)
-    # timesyncanalyzer.set_source(src)
+    # Set analyzer
+    featureextracter = FeatureExtracter()
+    featureextracter.set_source(src)
 
-    # Start the monitoring
-    src.run()
+    # Use threading to start the monitoring
+    def run_src(): src.run()
+    t_src = threading.Thread(target=run_src, daemon=True)
+    t_src.start()  
+    
+    time.sleep(.5) # Clean time
+    featureextracter.reset()
+    time.sleep(1) # buffer time 
+    
+    try:
+
+        while True:
+            featureextracter.to_featuredict()
+            features = featureextracter.get_featuredict()
+            print(features)
+            featureextracter.reset()
+            time.sleep(1) 
+            
+    except: exit(0)
