@@ -110,19 +110,15 @@ if __name__ == "__main__":
                             choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                             choice =  random.sample(choices, 1)[0]
                             print(f'{dev2} far but {dev1} close with same PCI!!!')
-                            at_cmd_runner.change_band(dev1, choice, setting1)
-                            setting1, rest = choice, rest_time
+                            at_cmd_runner.change_band(dev2, choice, setting2) # Aliways change dev2 
+                            setting2, rest = choice, rest_time
                             
                     elif case1 == 'Close' and case2 == 'Close':
                         choices = [c for c in all_band_choice if (info1[2] not in c and info2[2] not in c)] 
                         choice =  random.sample(choices, 1)[0]
                         print(f'R1/R2 both close')
-                        if prob1 > prob2:
-                            at_cmd_runner.change_band(dev1, choice, setting1)
-                            setting1, rest = choice, rest_time
-                        else:
-                            at_cmd_runner.change_band(dev2, choice, setting2)
-                            setting2, rest = choice, rest_time 
+                        at_cmd_runner.change_band(dev2, choice, setting2)
+                        setting2, rest = choice, rest_time # Aliways change dev2 
                 #############################################
                 
             end = time.time()
