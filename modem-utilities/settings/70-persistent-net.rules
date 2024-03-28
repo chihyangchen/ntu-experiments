@@ -40,3 +40,15 @@ SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="76857c8" , NAME="qc00"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="bc4587d" , NAME="qc01"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="5881b62f", NAME="qc02"
 SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="32b2bdb2", NAME="qc03"
+
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="345022ef", NAME="m11"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="b51fc56d", NAME="m12"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="98295205", NAME="m21"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="6e8d46d0", NAME="m22"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="48891fdc", NAME="m31"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="86667477", NAME="m32"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="54a942c6", NAME="m41"
+SUBSYSTEM=="net", ACTION=="add", ATTRS{serial}=="4af8828e", NAME="m42"
+
+
+
