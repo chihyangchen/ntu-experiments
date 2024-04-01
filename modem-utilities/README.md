@@ -4,6 +4,8 @@
 2. dial-qmi with the specific network interface
 ***
 note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rules.d/ to rename the device interface
+	  without adding the support of specific module, default name of the network interface for the modules are wwan0,wwan1....
+	  set the configuration active: udevadm control --reload-rules && udevadm trigger
 ***
 modem-info to capture the current serving and neighbor cell information.   
 band-setting to enable the specific band setting.   
@@ -31,7 +33,8 @@ qc-at to send the at command to specific quectel module.
 
 ## qc-at.sh  
 ### Description:  
-    at command of the specific module   
+    at command of the specific module
+	{TOP} variable of PATH of INTERFACE.lock file
 ### Command:   
     [bash] qc-at -i [interface] -c [at command]   
 

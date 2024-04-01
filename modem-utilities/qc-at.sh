@@ -36,7 +36,7 @@ GET_AT_PATH $interface
 
 if [ -f $LOCK_FILE ]; then
 	echo "device port is occupied!"
-	sleep 1
+	sleep 0.5 
 else
 	touch $LOCK_FILE
 	mxat -d $DEV_AT_PATH -c $cmd -t 10000
