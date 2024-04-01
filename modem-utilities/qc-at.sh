@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source ./quectel-path.sh
+TOP=/home/moxa
 
 helpFunction()
 {
@@ -24,6 +25,20 @@ then
     echo "missing argument"
     helpFunction
 fi
+
+if [ ! -d $TOP/temp ]; then
+	echo "Directory does not exist."
+	mkdir $TOP/temp
+fi
+LOCK_FILE=$TOP/temp/$interface.lock
+
 GET_AT_PATH $interface
 
-mxat -d $DEV_AT_PATH -c $cmd
+if [ -f $LOCK_FILE ]; then
+	echo "device port is occupied!"
+	sleep 1
+else
+	touch $LOCK_FILE
+	mxat -d $DEV_AT_PATH -c $cmd -t 10000
+	rm -f ${LOCK_FILE}
+fi

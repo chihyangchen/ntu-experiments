@@ -25,8 +25,8 @@ then
     echo "missing argument"
     helpFunction
 fi
-
-path="./temp"
+TOP=/home/moxa
+path="$TOP/temp"
 wdm=`ls /sys/class/net/$interface/device/usbmisc/`
 if [ -z "$wdm" ]
 then
