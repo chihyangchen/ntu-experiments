@@ -94,3 +94,36 @@ case "$1" in
     esac
 
 }
+
+# V3000 use
+
+function GET_GPIO_SLOT {
+
+case "$1" in
+		m11)
+			SLOT="1"
+		;;
+		m12)
+			SLOT="2"
+        ;;
+		m21)
+			SLOT="1"
+        ;;
+		m22)
+			SLOT="2"
+        ;;
+		m31)
+			SLOT="1"
+        ;;
+		m32)
+			SLOT="2"
+        ;;
+		m41)
+			SLOT="1"
+        ;;
+		m42)
+			SLOT="2"
+		;;
+	esac
+
+}

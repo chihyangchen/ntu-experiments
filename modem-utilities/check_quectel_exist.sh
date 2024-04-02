@@ -38,12 +38,12 @@ do
 #    echo "$INTERFACE module exists."
 #else
 	echo "No related module"
-	sleep 0.2
+	sleep 0.5
 done
 
 while [ "$result" != "${isOK}" ]
 do
-	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c AT)`
+	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c AT -t 5000)`
 
 	for i in ${status[@]};
 	do
