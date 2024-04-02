@@ -2,3 +2,8 @@
 
 PATH_TEMP_DIR="/home/moxa"
 PATH_UTILS="/home/moxa/young/ntu-experiments/modem-utilities"
+
+if [ ! -d "$PATH_TEMP_DIR/temp" ] 
+then
+	mkdir "$PATH_TEMP_DIR/temp"
+fi

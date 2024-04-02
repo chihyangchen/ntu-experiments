@@ -47,6 +47,8 @@ do
 		let COUNT+=1
 	else
 		echo "success"
+		### COMMAND to do the dial
+		exit 0
 	fi
 
 	if [ $COUNT -gt 9 ]; then

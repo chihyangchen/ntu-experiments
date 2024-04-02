@@ -4,6 +4,7 @@
 source PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 source $PATH_UTILS/AT_CHECK
+
 SUDO=sudo
 sts=()
 result=""

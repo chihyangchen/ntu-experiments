@@ -5,7 +5,7 @@ source PATH_for_NTU_exp
 TOP=$PATH_TEMP_DIR
 source $PATH_UTILS/quectel-path.sh
 #echo $PATH_UTILS
-
+SUDO=sudo
 helpFunction()
 {
     echo ""
@@ -42,6 +42,6 @@ if [ -f $LOCK_FILE ]; then
 	sleep 0.5 
 else
 	touch $LOCK_FILE
-	mxat -d $DEV_AT_PATH -c $cmd -t 10000
+	${SUDO} mxat -d $DEV_AT_PATH -c $cmd -t 10000
 	rm -f ${LOCK_FILE}
 fi
