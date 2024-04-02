@@ -1,8 +1,9 @@
 #!/bin/bash
 
 # The value can only be defined in quectel=path.sh
-source quectel-path.sh
-source AT_CHECK
+source PATH_for_NTU_exp
+source $PATH_UTILS/quectel-path.sh
+source $PATH_UTILS/AT_CHECK
 SUDO=sudo
 sts=()
 result=""
@@ -10,30 +11,30 @@ result=""
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -i [interface] "
-    echo "interface: network interface"
+    echo "Usage: $0 -i [INTERFACE] "
+    echo "INTERFACE: network INTERFACE"
     exit 1 # Exit script after printing help
 }
 
 while getopts "i:" opt
 do
     case "$opt" in
-        i ) interface="$OPTARG" ;;
+        i ) INTERFACE="$OPTARG" ;;
         ? ) helpFunction ;;
     esac
 done
-if [ -z "$interface" ]
+if [ -z "$INTERFACE" ]
 then
     echo "missing argument"
     helpFunction
 fi
 
 
-GET_AT_PATH $interface
+GET_AT_PATH $INTERFACE
 
-while [ ! -e $DEV_AT_PATH ];
+while [  -z $DEV_AT_PATH ] ||  [ ! -e $DEV_AT_PATH  ];
 do
-#    echo "$interface module exists."
+#    echo "$INTERFACE module exists."
 #else
 	echo "No related module"
 	sleep 0.2
@@ -41,7 +42,7 @@ done
 
 while [ "$result" != "${isOK}" ]
 do
-	status=`(${SUDO} ./qc-at.sh -i $interface -c AT)`
+	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c AT)`
 
 	for i in ${status[@]};
 	do

@@ -1,7 +1,10 @@
 #!/bin/bash
 
-source ./quectel-path.sh
-TOP=/home/moxa
+source PATH_for_NTU_exp
+
+TOP=$PATH_TEMP_DIR
+source $PATH_UTILS/quectel-path.sh
+#echo $PATH_UTILS
 
 helpFunction()
 {

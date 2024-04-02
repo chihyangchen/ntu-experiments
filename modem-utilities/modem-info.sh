@@ -1,18 +1,24 @@
 #!/bin/bash
+## DO not use
 
 # Author: Chih-Yang Chen
 # Description: 
 #       acquire the serving/neighbour cell info from target at command port 
 #       loop if add delay -t argument
-# input: -i interface -t delay time
+# input: -i INTERFACE -t delay time
 # output: at command information
-source ./quectel-path.sh
+echo "Do NOT USE"
+exit 0
+
+source PATH_for_NTU_exp
+source $PATH_UTILS/quectel-path.sh
+TOP="$PATH_TEMP_DIR"
 
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -i [interface] {-t [delay sec]}"
-    echo "interface: network interface"
+    echo "Usage: $0 -i [INTERFACE] {-t [delay sec]}"
+    echo "INTERFACE: network INTERFACE"
     echo "sleep time: wait time of each information capture"
     exit 1 # Exit script after printing help
 }
@@ -20,20 +26,20 @@ helpFunction()
 while getopts "i:t:" opt
 do
     case "$opt" in
-        i ) interface="$OPTARG" ;;
+        i ) INTERFACE="$OPTARG" ;;
         t ) delay="$OPTARG" ;;
         ? ) helpFunction ;;
     esac
 done
 
-if [ -z "$interface" ] 
+if [ -z "$INTERFACE" ] 
 then
     echo "missing argument"
     helpFunction
 fi
 
-GET_AT_PATH $interface
-wdm=`(head -1 ./temp/$interface)`
+GET_AT_PATH $INTERFACE
+wdm=`(head -1 $TOP/temp/$INTERFACE)`
 
 capture()
 {
@@ -42,7 +48,7 @@ capture()
     mxat -d $DEV_AT_PATH -c at+qeng=\"neighbourcell\" -t 3000
     qmicli -p -d $wdm --nas-get-cell-location-info
 }
-filename=$interface"_`(date +%Y-%m-%d_%H-%M-%S)`"
+filename=$INTERFACE"_`(date +%Y-%m-%d_%H-%M-%S)`"
 if [ -z $delay ]
 then
     capture
@@ -52,17 +58,17 @@ else
         then
             mkdir $path
     fi
-    if [ ! -d "$path/$interface" ]
+    if [ ! -d "$path/$INTERFACE" ]
         then
-            mkdir "$path/$interface"
+            mkdir "$path/$INTERFACE"
     fi
     
     touch ./looping
     while [ -f ./looping ] 
     do
-        capture >> "$path/$interface/$filename"
+        capture >> "$path/$INTERFACE/$filename"
         sleep $delay
-#        tail -10 "$path/$interface/$filename"
+#        tail -10 "$path/$INTERFACE/$filename"
     done
 fi
 

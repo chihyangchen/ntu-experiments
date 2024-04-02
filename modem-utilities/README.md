@@ -1,24 +1,17 @@
 # HOW TO USE (Quectel RM500Q only)   
 ## Step  
-1. use get-all-modem.py to get the current modems device node 
-2. dial-qmi with the specific network interface
+1. use get-all-modem.py to get the current modems device node (need to add the supported module INTERFACE) 
+2. copy the PATH\_for\_NTU\_exp to the gloable PATH such as /usr/local/bin/
+3. dial-qmi with the specific network interface
 ***
-note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rules.d/ to rename the device interface
-	  without adding the support of specific module, default name of the network interface for the modules are wwan0,wwan1....
+note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rules.d/ to rename the device interface   
+	  without adding the support of specific module, default name of the network interface for the modules are wwan0,wwan1...   
 	  set the configuration active: udevadm control --reload-rules && udevadm trigger
 ***
 modem-info to capture the current serving and neighbor cell information.   
 band-setting to enable the specific band setting.   
 qc-at to send the at command to specific quectel module.  
      
-## modem-info.sh  
-### Description:  
-    Acquire the serving/neighbour cell info from target at command port   
-    Loop if add delay -t argument and will auto record 
-    delete the looping file in the current directory to stop if running in background.   
-### Command:  
-    [bash] ./modem-info.sh -i [interface] {-t [delay sec]}   
-  
 ## band-setting.sh   
 ### Description:  
     This script can configure the LTE/NSA_NR band combo via the corresponding AT PORT  

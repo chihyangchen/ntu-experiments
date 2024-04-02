@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GET_AT_PATH(){
+function GET_AT_PATH {
 
 case "$1" in
     wwan0)
@@ -46,7 +46,7 @@ case "$1" in
     esac
 }
 
-GET_DM_PATH(){
+function GET_DM_PATH {
 case "$1" in
     wwan0)
         DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if00-port0"
@@ -67,25 +67,25 @@ case "$1" in
         DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if00-port0"
         ;;
     m11)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if00-port0"
         ;;
     m12)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if00-port0"
         ;;
     m21)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if00-port0"
         ;;
     m22)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_6e8d46d0-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_6e8d46d0-if00-port0"
         ;;
     m31)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_48891fdc-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_48891fdc-if00-port0"
         ;;
     m32)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_86667477-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_86667477-if00-port0"
         ;;
     m41)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_54a942c6-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_54a942c6-if00-port0"
         ;;
     m42)
         DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_4af8828e-if00-port0"

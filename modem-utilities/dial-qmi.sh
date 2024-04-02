@@ -1,10 +1,12 @@
 #!/bin/bash
 
+source PATH_for_NTU_exp
+
 helpFunction()
 {
     echo ""
-    echo "Usage: $0 -i [interface] "
-    echo "interface: interface name eg. wwan0"
+    echo "Usage: $0 -i [INTERFACE] "
+    echo "INTERFACE: INTERFACE name eg. wwan0"
     echo "PATH: path to save the temp file"
     exit 1 # Exit script after printing help
 }
@@ -12,30 +14,30 @@ helpFunction()
 while getopts "i:" opt
 do
     case "$opt" in
-        i ) interface="$OPTARG" ;;
+        i ) INTERFACE="$OPTARG" ;;
 #        s ) apn="$OPTARG" ;;
         ? ) helpFunction ;;
     esac
 done
 
-if [ -z "$interface" ] 
+if [ -z "$INTERFACE" ] 
 then
     echo "missing argument"
     helpFunction
 fi
 
-path="./temp"
-wds_path="$path/temp-wds_$interface"
-wds_ip_path="$path/temp-ip_$interface"
-wds_ip_filter="$path/temp-ip-setting_$interface"
-wdm=`(head -1 ./temp/$interface)`
+path="$PATH_TEMP_DIR/temp"
+wds_path="$path/temp-wds_$INTERFACE"
+wds_ip_path="$path/temp-ip_$INTERFACE"
+wds_ip_filter="$path/temp-ip-setting_$INTERFACE"
+wdm=`(head -1 $PATH_TEMP_DIR/temp/$INTERFACE)`
 mux="1"
 apn="internet"
 :> $wds_path
 :> $wds_ip_path
 :> $wds_ip_filter
 
-echo Y > /sys/class/net/$interface/qmi/raw_ip
+echo Y > /sys/class/net/$INTERFACE/qmi/raw_ip
 
 
 (qmicli -p -d $wdm --client-no-release-cid --wds-noop) > $wds_path
@@ -55,7 +57,7 @@ qmicli -d $wdm --device-open-proxy --wds-start-network="ip-type=4,apn=$apn" --cl
 ip=`(cat $wds_ip_filter | head -1)`
 mask=`(cat $wds_ip_filter | head -2 | tail -1)`
 
-ifconfig $interface up
-ifconfig $interface $ip netmask $mask
+ifconfig $INTERFACE up
+ifconfig $INTERFACE $ip netmask $mask
 #udhcpc -f -n -q -t 5 -i wwan0
 

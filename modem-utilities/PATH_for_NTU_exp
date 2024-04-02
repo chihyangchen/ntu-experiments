@@ -1,0 +1,4 @@
+#!/bin/bash
+
+PATH_TEMP_DIR="/home/moxa"
+PATH_UTILS="/home/moxa/young/ntu-experiments/modem-utilities"
