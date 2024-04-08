@@ -48,6 +48,7 @@ do
 	else
 		echo "success"
 		### COMMAND to do the dial
+		$PATH_UTILS/dial-qmi.sh -i $INTERFACE
 		exit 0
 	fi
 

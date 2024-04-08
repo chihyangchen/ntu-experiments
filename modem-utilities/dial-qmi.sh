@@ -37,7 +37,7 @@ apn="internet"
 :> $wds_ip_path
 :> $wds_ip_filter
 
-echo 'Y' | ${SUDO} tee /sys/class/net/${INTERFACE}/qmi/raw_ip
+echo 'Y' | ${SUDO} tee /sys/class/net/${INTERFACE}/qmi/raw_ip > /dev/null 2>&1 
 
 (${SUDO} qmicli -p -d $wdm --client-no-release-cid --wds-noop) > $wds_path
 while [ ! -s "$wds_path" ]

@@ -1,7 +1,7 @@
 # HOW TO USE (Quectel RM500Q only)   
 ## Step  
 1. use get-all-modem.py to get the current modems device node (need to add the supported module INTERFACE) 
-2. copy the PATH\_for\_NTU\_exp to the gloable PATH such as /usr/local/bin/
+2. copy the PATH\_for\_NTU\_exp to the gloable PATH such as /usr/local/bin/ (Modify the relative PATH for the utilitis in this file if needed)
 3. dial-qmi with the specific network interface
 ***
 note: copy the interface naming file, 70-persistent-net.rules into /etc/udev/rules.d/ to rename the device interface   
