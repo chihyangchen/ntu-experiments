@@ -1,7 +1,7 @@
 #!/bin/bash
 
 source PATH_for_NTU_exp
-
+SUDO=sudo
 helpFunction()
 {
     echo ""
@@ -37,27 +37,26 @@ apn="internet"
 :> $wds_ip_path
 :> $wds_ip_filter
 
-echo Y > /sys/class/net/$INTERFACE/qmi/raw_ip
+echo 'Y' | ${SUDO} tee /sys/class/net/${INTERFACE}/qmi/raw_ip
 
-
-(qmicli -p -d $wdm --client-no-release-cid --wds-noop) > $wds_path
+(${SUDO} qmicli -p -d $wdm --client-no-release-cid --wds-noop) > $wds_path
 while [ ! -s "$wds_path" ]
 do
 	echo "re-allocate the wds resource"
 	sleep 1
-	(qmicli -p -d $wdm --client-no-release-cid --wds-noop) > $wds_path
+	(${SUDO} qmicli -p -d $wdm --client-no-release-cid --wds-noop) > $wds_path
 done
 echo "Allocate wds resource succcess"
 wds_id=`(cat $wds_path | grep CID | awk '{print $2}' | sed 's/.$//' | sed 's/^.//')`
 
-qmicli -d $wdm --device-open-proxy --wds-start-network="ip-type=4,apn=$apn" --client-cid=$wds_id --client-no-release-cid
-(qmicli -p -d $wdm --wds-get-current-settings --client-cid=$wds_id --client-no-release-cid) > $wds_ip_path
+${SUDO} qmicli -d $wdm --device-open-proxy --wds-start-network="ip-type=4,apn=$apn" --client-cid=$wds_id --client-no-release-cid
+(${SUDO} qmicli -p -d $wdm --wds-get-current-settings --client-cid=$wds_id --client-no-release-cid) > $wds_ip_path
 
-./read-setting.py $wds_ip_path $wds_ip_filter
+$PATH_UTILS/read-setting.py $wds_ip_path $wds_ip_filter
 ip=`(cat $wds_ip_filter | head -1)`
 mask=`(cat $wds_ip_filter | head -2 | tail -1)`
 
-ifconfig $INTERFACE up
-ifconfig $INTERFACE $ip netmask $mask
+${SUDO} ifconfig $INTERFACE up
+${SUDO} ifconfig $INTERFACE $ip netmask $mask
 #udhcpc -f -n -q -t 5 -i wwan0
 

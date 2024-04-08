@@ -7,6 +7,7 @@
 # Note: Neet to use dial.sh by Chih-Yang
 
 source PATH_for_NTU_exp
+SUDO=sudo
 helpFunction()
 {
     echo ""
@@ -32,8 +33,8 @@ path="$PATH_TEMP_DIR/temp"
 wds_path="$path/temp-wds_$INTERFACE"
 wdm=`(head -1 $path/$INTERFACE)`
 wds_id=`(cat $wds_path | grep CID | awk '{print $2}' | sed 's/.$//' | sed 's/^.//')`
-qmicli -d $wdm --device-open-proxy --wds-stop-network=disable-autoconnect --client-cid=$wds_id
+${SUDO} qmicli -d $wdm --device-open-proxy --wds-stop-network=disable-autoconnect --client-cid=$wds_id
 
-ifconfig $INTERFACE  down
-ifconfig $INTERFACE 0.0.0.0
+${SUDO} ifconfig $INTERFACE  down
+${SUDO} ifconfig $INTERFACE 0.0.0.0
 
