@@ -5,6 +5,9 @@
 #output: network INTERFACE file with cdc-wdmX and the corresponding at command port inside
 source PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
+SUDO=sudo
+CHECK_temp_dir
+
 helpFunction()
 {
     echo ""
@@ -43,5 +46,6 @@ if [ ! -d $path ]
 then
         mkdir $path
 fi
-    echo "/dev/$wdm" > "$path/$INTERFACE"
-    echo "$DEV_DM_PATH" >> "$path/$INTERFACE"
+
+echo "/dev/$wdm" | ${SUDO} tee "$path/$INTERFACE" > /dev/null 2>&1
+echo "$DEV_DM_PATH" | ${SUDO} tee -a "$path/$INTERFACE" > /dev/null 2>&1

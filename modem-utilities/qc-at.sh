@@ -8,6 +8,8 @@ source $PATH_UTILS/quectel-path.sh
 SUDO=sudo
 AT_TIMEOUT=10000
 
+CHECK_temp_dir
+
 helpFunction()
 {
     echo ""
@@ -32,19 +34,18 @@ then
     helpFunction
 fi
 
-if [ ! -d $TOP/temp ]; then
-	echo "Directory does not exist."
-	mkdir $TOP/temp
-fi
 LOCK_FILE=$TOP/temp/$INTERFACE.lock
 
 GET_AT_PATH $INTERFACE
 
-if [ -f $LOCK_FILE ]; then
+while [ -f $LOCK_FILE ]; 
+do
+#if [ -f $LOCK_FILE ]; then
 	echo "device port is occupied!"
 	sleep 0.5 
-else
-	touch $LOCK_FILE
+done
+#else
+	${SUDO} touch $LOCK_FILE
 	${SUDO} mxat -d $DEV_AT_PATH -c $cmd -t $AT_TIMEOUT
-	rm -f ${LOCK_FILE}
-fi
+	${SUDO} rm -f ${LOCK_FILE}
+#fi
