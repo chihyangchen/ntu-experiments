@@ -1,3 +1,7 @@
 v1: Follow by the Professor's advice first algorithm.
 v2: Similar idea to that of version1, except forcus on preventing RLF from happening.
-v3: v2 but change the predictor.
+v3: same as v2 but change the predictor.
+v4: 
+    use R1 as main 5G radio; use R2 as compensate radio.
+    R1 maintain no band-locking 5G. R2 maintain LTE only band-locking.
+    R1 dont change but R2 change while action.

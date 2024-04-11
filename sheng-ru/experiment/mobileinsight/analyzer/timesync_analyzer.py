@@ -15,6 +15,10 @@ class TimeSyncAnalyzer(Analyzer):
         
          # init packet filters
         self.add_source_callback(self.ue_event_filter)
+        self.msg_type = ["LTE_PHY_Connected_Mode_Intra_Freq_Meas",
+                         "LTE_RRC_OTA_Packet",
+                         "5G_NR_RRC_OTA_Packet",
+                         "5G_NR_ML1_Searcher_Measurement_Database_Update_Ext"]
         
     def set_source(self, source):
         """
@@ -36,7 +40,7 @@ class TimeSyncAnalyzer(Analyzer):
     
     # For testing
     def test(self, msg):
-        if msg.type_id == "LTE_PHY_Connected_Mode_Intra_Freq_Meas":
+        if msg.type_id in self.msg_type:
             
             msg_dict = dict(msg.data.decode())
             date = msg_dict['timestamp']
