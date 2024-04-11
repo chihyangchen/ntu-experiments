@@ -60,3 +60,4 @@ do
 		sleep 0.2
 	fi
 done
+`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c ATE1 -t 5000)` > /dev/null 2>&1

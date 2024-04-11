@@ -31,10 +31,20 @@ fi
 
 path="$PATH_TEMP_DIR/temp"
 wds_path="$path/temp-wds_$INTERFACE"
+
+if [ ! -f $wds_path ];
+then
+#if [ -f $LOCK_FILE ]; then
+    echo "Network may already be stopped"
+    exit 1
+fi
+
+
 wdm=`(head -1 $path/$INTERFACE)`
 wds_id=`(cat $wds_path | grep CID | awk '{print $2}' | sed 's/.$//' | sed 's/^.//')`
 ${SUDO} qmicli -d $wdm --device-open-proxy --wds-stop-network=disable-autoconnect --client-cid=$wds_id
 
-${SUDO} ifconfig $INTERFACE  down
-${SUDO} ifconfig $INTERFACE 0.0.0.0
+#${SUDO} ifconfig $INTERFACE  down
+#${SUDO} ifconfig $INTERFACE 0.0.0.0
 
+${SUDO} rm -f $path/temp*$INTERFACE

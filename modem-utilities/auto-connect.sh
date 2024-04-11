@@ -28,6 +28,27 @@ fi
 SUDO=sudo
 COUNT=0
 sts=()
+
+sts=()
+
+status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
+    for i in ${status[@]};
+    do
+        sts+=($i)
+    done
+    result=${sts[4]}
+#    echo "$result"
+    unset sts
+if [ "$result" != "$isOK" ]
+then
+    echo "Something is wrong with SIM"
+    exit 1
+fi
+
+
+
+
+
 result=$COPS0
 
 while [ $result == $COPS0 ] || [ $result == $COPS2 ];

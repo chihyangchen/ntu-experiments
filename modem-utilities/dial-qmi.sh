@@ -1,13 +1,15 @@
 #!/bin/bash
 
 source PATH_for_NTU_exp
+source $PATH_UTILS/AT_CHECK
 SUDO=sudo
+
 helpFunction()
 {
     echo ""
     echo "Usage: $0 -i [INTERFACE] (-d)"
     echo "INTERFACE: INTERFACE name eg. wwan0"
-    echo "PATH: path to save the temp file"
+    echo "-d flag is set as the first default route. Otherwise, the route will be appended to the last"
     exit 1 # Exit script after printing help
 }
 
@@ -25,6 +27,24 @@ then
     echo "missing argument"
     helpFunction
 fi
+
+sts=()
+
+status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
+    for i in ${status[@]};
+    do
+        sts+=($i)
+    done
+    result=${sts[4]}
+#    echo "$result"
+    unset sts
+if [ "$result" != "$isOK" ]
+then
+	echo "Something is wrong with SIM"
+	exit 1
+fi
+
+
 
 ${SUDO} $PATH_UTILS/get-cdc-wdm-num.sh -i $INTERFACE
 
@@ -70,7 +90,10 @@ if [ "$DGW" != "" ]
 then
 	DGW=`(cat $wds_ip_filter | tail -2 | head -1)`
 	${SUDO} ip route del default > /dev/null 2>&1
-	${SUDO} ip route add default via "$DGW" dev $INTERFACE  > /dev/null 2>&1
+	${SUDO} ip route append default via "$DGW" dev $INTERFACE  > /dev/null 2>&1
+else
+	DGW=`(cat $wds_ip_filter | tail -2 | head -1)`
+	${SUDO} ip route append default via "$DGW" dev $INTERFACE  > /dev/null 2>&1
 fi
 #udhcpc -f -n -q -t 5 -i wwan0
 
