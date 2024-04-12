@@ -41,7 +41,7 @@ status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
 if [ "$result" != "$isOK" ]
 then
 	echo "Something is wrong with SIM"
-	exit 1
+	exit 0
 fi
 
 
@@ -56,6 +56,16 @@ wds_ip_filter="$path/temp-ip-setting_$INTERFACE"
 wdm=`(head -1 $PATH_TEMP_DIR/temp/$INTERFACE)`
 mux="1"
 apn="internet"
+
+if [ -f $wds_path ];
+then
+    echo "not to dial twice!"
+	exit 1
+fi
+
+
+
+
 echo -n ""  | ${SUDO} tee $wds_path
 echo -n ""  | ${SUDO} tee $wds_ip_path
 echo -n ""  | ${SUDO} tee $wds_ip_filter

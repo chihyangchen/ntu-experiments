@@ -28,25 +28,43 @@ fi
 SUDO=sudo
 COUNT=0
 sts=()
+CHECK_INTERVAL=6
+VAL_TO_CFUN=9
 
-sts=()
-
-status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
-    for i in ${status[@]};
-    do
-        sts+=($i)
-    done
-    result=${sts[4]}
-#    echo "$result"
+function SIM_CHECK() {
+	sts=()
+	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
+    	for i in ${status[@]};
+    	do
+        	sts+=($i)
+    	done
+    res=${sts[4]}
+    echo "$result"
     unset sts
-if [ "$result" != "$isOK" ]
+	if [ "$res" != "$isOK" ]
+	then
+    	echo "Something is wrong with SIM"
+    	return 1 
+	fi
+}
+
+function CFUN_TOGGLE() {
+
+	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=0
+	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=1
+
+}
+
+SIM_CHECK
+if [  $? != 0 ]
 then
-    echo "Something is wrong with SIM"
-    exit 1
+	CFUN_TOGGLE
 fi
-
-
-
+SIM_CHECK
+if [  $? != 0 ]
+then
+    exit 0
+fi
 
 
 result=$COPS0
@@ -65,7 +83,7 @@ do
 
 	if  [ $result == $COPS0 ] || [ $result == $COPS2 ] ; then
 		echo "wait for registration"
-		sleep 6
+		sleep $CHECK_INTERVAL
 		let COUNT+=1
 	else
 		echo "success"
@@ -79,11 +97,17 @@ do
 		exit 0
 	fi
 
-	if [ $COUNT -gt 9 ]; then
+	if [ $COUNT -gt $VAL_TO_CFUN ]; then
 		COUNT=0
 		echo "toggle cfun 0/1"
-		${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=0
-		${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=1
+		CFUN_TOGGLE
+		#${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=0
+		#${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=1
+		SIM_CHECK
+		if [  $? != 0 ]
+		then
+			break
+		fi
 	fi
 
 done
