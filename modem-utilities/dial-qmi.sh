@@ -4,6 +4,16 @@ source PATH_for_NTU_exp
 source $PATH_UTILS/AT_CHECK
 SUDO=sudo
 
+function PING_TEST(){
+	ping 8.8.8.8 -I $1 -c 3 
+	if [ $? != 0 ]
+	then
+		return 1
+	else
+		return 0
+	fi
+}
+
 helpFunction()
 {
     echo ""
@@ -13,11 +23,12 @@ helpFunction()
     exit 1 # Exit script after printing help
 }
 
-while getopts "i:d" opt
+while getopts "i:dc" opt
 do
     case "$opt" in
         i ) INTERFACE="$OPTARG" ;;
         d ) DGW="0.0.0.0" ;;
+        c ) CHECK="do_check" ;;
         ? ) helpFunction ;;
     esac
 done
@@ -29,7 +40,6 @@ then
 fi
 
 sts=()
-
 status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
     for i in ${status[@]};
     do
@@ -106,4 +116,16 @@ else
 	${SUDO} ip route append default via "$DGW" dev $INTERFACE  > /dev/null 2>&1
 fi
 #udhcpc -f -n -q -t 5 -i wwan0
+
+# Check if it is successful dial, If not, run disconnection and dial again
+#ping test
+if [ "$CHECK" == "do_check" ];
+then
+	PING_TEST $INTERFACE
+	if [ $? != 0 ]; 
+	then
+		$PATH_UTILS/disconnect-qmi.sh -i $INTERFACE
+		$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+	fi
+fi
 

@@ -34,7 +34,6 @@ wds_path="$path/temp-wds_$INTERFACE"
 
 if [ ! -f $wds_path ];
 then
-#if [ -f $LOCK_FILE ]; then
     echo "Network may already be stopped"
     exit 1
 fi

@@ -101,13 +101,11 @@ do
 		COUNT=0
 		echo "toggle cfun 0/1"
 		CFUN_TOGGLE
-		#${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=0
-		#${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cfun=1
-		SIM_CHECK
-		if [  $? != 0 ]
-		then
-			break
-		fi
+#		SIM_CHECK
+#		if [  $? != 0 ]
+#		then
+#			break
+#		fi
 	fi
 
 done
