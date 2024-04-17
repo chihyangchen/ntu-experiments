@@ -43,6 +43,8 @@ fi
 GET_AT_PATH $INTERFACE
 GET_GPIO_SLOT $INTERFACE
 
+${SUDO} rm -rf $PATH_TEMP_DIR/temp/temp*$INTERFACE
+
 if [ ! -e $DEV_AT_PATH  ]
 then
 	echo "module is power down"

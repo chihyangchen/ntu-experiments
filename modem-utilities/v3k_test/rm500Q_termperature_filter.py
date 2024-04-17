@@ -8,9 +8,7 @@ import numpy
 target=["time","qfe_wtr_pa0","qfe_wtr_pa1","qfe_wtr_pa2","qfe_wtr_pa3"]
 target_nvme=["Sensor 1","Sensor 2","Sensor 3","Sensor 4"]
 target_core=["Core 0","Core 1","Core 2","Core 3"]
-exp=target
-count=0
-l_count=[]
+
 l_qfe_wtr_pa0=[]
 l_qfe_wtr_pa1=[]
 l_qfe_wtr_pa2=[]
@@ -30,10 +28,10 @@ m_export=[]
 
 
 
-def check_content(input):
-	for item in target:
-		if(item in input[0]):
-			return input[1]
+#def check_content(input):
+#	for item in target:
+#		if(item in input[0]):
+#			return input[1]
 
 
 
@@ -50,7 +48,6 @@ if __name__ == "__main__":
 	for word in lines:
 		word=word.split('"')
 #		print(word)
- #comment the below
 		if (len(word) < 2):
 			temp_system=word[0]
 			temp_system=temp_system.split(":")

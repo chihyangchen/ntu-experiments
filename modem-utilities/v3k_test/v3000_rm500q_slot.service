@@ -1,0 +1,12 @@
+[Unit]
+Description=V3000 M.2 power control service unit and auto connection.
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/bin/v3000_rm500q_slot_auto.sh START 
+ExecStop=/bin/bash /usr/local/bin/v3000_rm500q_slot_auto.sh STOP
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target

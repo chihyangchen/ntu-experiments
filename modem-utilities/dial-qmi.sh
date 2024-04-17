@@ -111,6 +111,7 @@ then
 	DGW=`(cat $wds_ip_filter | tail -2 | head -1)`
 	${SUDO} ip route del default > /dev/null 2>&1
 	${SUDO} ip route append default via "$DGW" dev $INTERFACE  > /dev/null 2>&1
+	${SUDO} udhcpc -f -n -q -t 5 -i $INTERFACE
 else
 	DGW=`(cat $wds_ip_filter | tail -2 | head -1)`
 	${SUDO} ip route append default via "$DGW" dev $INTERFACE  > /dev/null 2>&1

@@ -59,11 +59,12 @@ SIM_CHECK
 if [  $? != 0 ]
 then
 	CFUN_TOGGLE
-fi
-SIM_CHECK
-if [  $? != 0 ]
-then
-    exit 0
+	sleep 5 # delay for SIM enable when toggling
+	SIM_CHECK
+	if [  $? != 0 ]
+	then
+    	exit 0
+	fi
 fi
 
 
