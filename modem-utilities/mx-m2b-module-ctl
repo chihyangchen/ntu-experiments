@@ -1,0 +1,735 @@
+#!/bin/bash
+
+# Copyright (C) 2022 MOXA Inc. All rights reserved.
+# This software is distributed under the terms of the MOXA SOFTWARE NOTICE.
+# See the file LICENSE for details.
+#
+# Name:
+#       MOXA M.2 B Key Form Factor Module Control Utility
+#
+# Description:
+#       Utility for controlling M.2 B key form factor modules.
+#
+
+TARGET_PRODUCT=""
+TARGET_SLOT=""
+DMIDECODE="/usr/sbin/dmidecode"
+
+_product_V3000() {
+	GPIO_MODULE="gpio_pca953x"
+	NUM_OF_MODULE_SLOTS=2
+
+	## If the function is not support, it should keep array empty.
+	# Slot 1: M.2 B Key (5G) 
+	# Addr=0x27, PWREN(EN_M2B_1_GPIO)=GP00=0, TURNON(M2B_1_FC_PWROFF)=GP01=1,
+	# AIRPLANE(M2B_1_W_DISABLE)=GP02=2, RESET(M2B_1_RESET)=GP06=6, SIM_SEL(M2B_1_SIM_SEL_GPIO)=GP07=7
+	# ALIVE_EM9190=GP03=3, ALIVE_FN980=GP04=4, ALIVE_RM520N=GP05=5
+	# CONFIG_0=GP10=8, CONFIG_1=GP11=9, CONFIG_2=GP12=10, CONFIG_3=GP13=11,
+	##
+	# Slot 2: M.2 B Key (5G)
+	# Addr=0x26, PWREN(EN_M2B_2_GPIO)=GP00=0, TURNON(M2B_2_FC_PWROFF)=GP01=1,
+	# AIRPLANE(M2B_2_W_DISABLE)=GP02=2, RESET(M2B_2_RESET)=GP06=6, SIM_SEL(M2B_2_SIM_SEL_GPIO)=GP07=7
+	# CONFIG_0=GP10=8, CONFIG_1=GP11=9, CONFIG_2=GP12=9, CONFIG_3=GP11=10,
+	# ALIVE_EM9190=GP03=3, ALIVE_FN980=GP04=4, ALIVE_RM520N=GP05=5
+	##
+
+	ADDR_TBL=(27 26)
+	PWREN_TBL=(0 0)
+	TURNON_TBL=(1 1)
+	AIRPLANE_TBL=(2 2)
+	RESET_TBL=(6 6)
+	SIM_SEL_TBL=(7 7)
+	ALIVE_EM9190_TBL=(3 3)
+	ALIVE_FN980_TBL=(4 4)
+	ALIVE_RM500_TBL=(5 5)
+	CONFIG_0_TBL=(8 8)
+	CONFIG_1_TBL=(9 9)
+	CONFIG_2_TBL=(10 10)
+	CONFIG_3_TBL=(11 11)
+}
+
+declare -A PRODUCT_PROFILE=(
+	["V3000"]=_product_V3000
+)
+
+load_product_name_from_dmi() {
+	local ret=1
+
+	for m in $($DMIDECODE -t 12 | grep "Option " | awk -F ':' '{print substr($2,1,11)}' | sed 's/ //g');
+	do
+		if [[ ${PRODUCT_PROFILE[$m]} ]]; then
+				TARGET_PRODUCT=$m
+				${PRODUCT_PROFILE[$TARGET_PRODUCT]}
+				ret=0
+				break
+		fi
+	done
+
+	for m in $($DMIDECODE -t 1 | grep "Product Name" | awk -F ':' '{print $2}' | sed 's/ //g');
+	do
+		if [[ ${PRODUCT_PROFILE[$m]} ]]; then
+			TARGET_PRODUCT=$m
+			${PRODUCT_PROFILE[$TARGET_PRODUCT]}
+			ret=0
+			break
+		fi
+	done
+
+	return $ret
+}
+
+load_product_config() {
+	if load_product_name_from_dmi; then
+		# Determine gpio chip profile
+		gpc=${GPIO_CHIP[$GPIO_MODULE]}
+	else
+		echo "Error: model profile not found."
+		exit 1
+	fi
+}
+
+# GPIO function
+gpio_request() {
+	local gpio=${1}
+
+	if [ ! -e "/sys/class/gpio/gpio${gpio}" ]
+	then
+		echo "${gpio}" > /sys/class/gpio/export
+	fi
+}
+
+gpio_set_value() {
+	local gpio=${1}
+	local value=${2}
+
+	gpio_request "${gpio}"
+	case "${value}" in
+	0)
+		echo "low" > "/sys/class/gpio/gpio${gpio}/direction"
+		;;
+	1)
+		echo "high" > "/sys/class/gpio/gpio${gpio}/direction"
+		;;
+	*)
+		usage
+	;;
+	esac
+}
+
+gpio_get_value() {
+	local gpio=${1}
+
+	gpio_request "${gpio}"
+	cat "/sys/class/gpio/gpio${gpio}/value"
+}
+
+gpc_it8786() {
+	local gpio=$1
+	local GPIO_TABLE=(
+		10 11 12 13 14 15 16 17
+		20 21 22 23 24 25 26 27
+		30 31 32 33 34 35 36 37
+		40 41 42 43 44 45 46 47
+		50 51 52 53 54 55 56 57
+		60 61 62 63 64 65 66 67
+		70 71 72 73 74 75 76 77
+		80 81 82 83 84 85 86 87
+	)
+
+	if ! $(is_module_loaded gpio_it87); then
+		echo "gpio_it87 driver is not loaded."
+		exit 1
+	fi
+
+	[[ ! ${GPIO_TABLE[*]} =~ $gpio ]] && \
+			echo "Invalid gpio number." && exit 1
+
+	for gpiochip in /sys/class/gpio/gpiochip*
+	do
+		if cat "${gpiochip}"/label | grep -q "gpio_it87"
+		then
+			base=$(cat "${gpiochip}"/base)
+			break
+		fi
+	done
+
+	group=$(($gpio / 10 - 1))
+	bit=$(($gpio % 10))
+	echo $((base + 8 * group + bit))
+}
+
+gpc_pca953x() {
+	local gpio=$1
+	local chip_addr="${ADDR_TBL[$TARGET_SLOT]}"
+
+	if ! $(is_module_loaded gpio_pca953x); then
+		echo "gpio_pca953x driver is not loaded."
+		exit 1
+	fi
+
+	for gpc in /sys/class/gpio/gpiochip*
+	do
+		if cat "${gpc}"/label | grep -q $chip_addr; then
+			if [ -f "${gpc}/device/name" ]; then
+				if [[ $(cat $gpc/device/name) == "pca9535" ]]; then
+					base=$(cat $gpc/base)
+					break
+				fi
+			fi
+		fi
+	done
+
+	echo $((base + $gpio))
+}
+
+declare -A GPIO_CHIP=(
+	["gpio_it87"]=gpc_it8786
+	["gpio_pca953x"]=gpc_pca953x
+)
+
+usage() {
+cat << EOF
+Usage:
+       mx-m2b-module-ctl [Options]
+
+Operations:
+       -s, --slot <module_slot_id>
+               Select module slot
+       -p, --pwren [high|low]
+               Get/Set power enable pin high/low status
+       -t, --turnon [high|low]
+               Get/Set turn-high pin high/low status
+       -r, --reset [high|low]
+               Get/Set reset pin high/low status
+       -a, --airplane [high|low]
+               Get/Set airplane pin high/low status
+       -i, --sim 1|2
+               Get/Set sim card slot 1/2
+       -m, --mod_status 1|2
+               Get module and config status
+
+Example:
+       Set power enable to [high] status for module 1
+       # mx-m2b-module-ctl -s 1 -p high
+       Get power enable pin status of module 1
+       # mx-m2b-module-ctl -s 1 -p
+
+       Set turn-on pin to [high] status for module 1
+       # mx-m2b-module-ctl -s 1 -t high
+       Get turn-on pin status of module 1
+       # mx-m2b-module-ctl -s 1 -t
+
+       Set reset pin to [low] status for module 2
+       # mx-m2b-module-ctl -s 2 -r low
+       Get reset pin status of module 2
+       # mx-m2b-module-ctl -s 2 -r
+
+       Set airplane pin to [low] status for module 2
+       # mx-m2b-module-ctl -s 2 -a low
+       Get airplane pin status of module 2
+       # mx-m2b-module-ctl -s 2 -a
+
+       Select SIM slot 2 for module 2
+       # mx-m2b-module-ctl -s 2 -i 2
+       Get current SIM slot of module 2
+       # mx-m2b-module-ctl -s 2 -i
+
+       Get module 2 status
+       # mx-m2b-module-ctl -s 2 -m
+EOF
+}
+
+is_module_loaded() {
+	local mod_name=$1
+	if lsmod | grep -w $mod_name &> /dev/null; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+is_number() {
+	local input=${1}
+	local num_regex='^[0-9]+$'
+
+	if [ -z "${input}" ]; then
+		return 1
+	fi
+
+	if ! [[ ${input} =~ ${num_regex} ]]; then
+		return 1
+	fi
+
+	return 0
+}
+
+is_slot_valid() {
+	local slot=${1}
+
+	if ! is_number "${slot}"; then
+		return 1
+	fi
+
+	if [ "${slot}" -le 0 ] || [ "${slot}" -gt "${NUM_OF_MODULE_SLOTS}" ]; then
+		return 1
+	fi
+
+	return 0
+}
+
+not_support() {
+	echo "Operation not supported"
+}
+
+do_reset() {
+	if [[ ${#RESET_TBL[@]} -eq 0 ]]; then
+		not_support
+		return
+	fi
+
+	local slot=$(($1 - 1))
+	local state=$2
+	local target_gpio=$($gpc ${RESET_TBL[$slot]})
+
+	if [ -z $target_gpio ]; then
+		echo "Unknown Module Slot $slot"
+		return 1
+	fi
+
+	case $state in
+		# Set
+		high)
+			echo "Set reset pin as [high] status for slot #${1}"
+			gpio_set_value $target_gpio 1
+			;;
+		low)
+			echo "Set reset pin as [low] status for slot #${1}"
+			gpio_set_value $target_gpio 0
+			;;
+		# Get
+		"")
+			ret=$(gpio_get_value $target_gpio)
+			case $ret in
+				0)
+					echo "Slot #${1} reset status is [low]"
+					;;
+				1)
+					echo "Slot #${1} reset status is [high]"
+					;;
+				*) 
+					echo "unknown reset status"
+					return 1
+					;;
+			esac
+			;;
+		*)
+			echo "Unknown reset status"
+			return 1
+			;;
+	esac
+}
+
+do_turnon() {
+	if [[ ${#TURNON_TBL[@]} -eq 0 ]]; then
+		not_support
+		return
+	fi
+
+	local slot=$(($1 - 1))
+	local state=$2
+	local target_gpio=$($gpc ${TURNON_TBL[$slot]})
+
+	if [ -z $target_gpio ]; then
+		echo "Unknown Module Slot $slot"
+		return 1
+	fi
+
+	case $state in
+		# Set
+		high)
+			echo "Set turn on pin as [high] status for slot #${1}"
+			gpio_set_value $target_gpio 1
+			;;
+		low)
+			echo "Set turn on pin as [low] status for slot #${1}"
+			gpio_set_value $target_gpio 0
+			;;
+		# Get
+		"")
+			ret=$(gpio_get_value $target_gpio)
+			case $ret in
+				0)
+					echo "Slot #${1} turn on status is [low]"
+					;;
+				1)
+					echo "Slot #${1} turn on status is [high]"
+					;;
+				*) 
+					echo "unknown turn on pin status"
+					return 1
+					;;
+			esac
+			;;
+		*)
+			echo "Unknown turn on pin status"
+			return 1
+			;;
+	esac
+}
+
+do_pwren() {
+	if [[ ${#PWREN_TBL[@]} -eq 0 ]]; then
+		not_support
+		return
+	fi
+
+	local slot=$(($1 - 1))
+	local state=$2
+	local target_gpio=$($gpc ${PWREN_TBL[$slot]})
+
+	if [ -z $target_gpio ]; then
+		echo "Unknown Module Slot $slot"
+		return 1
+	fi
+
+	case $state in
+		# Set
+		high)
+			echo "Set power enable pin as [high] status for slot #${1}"
+			gpio_set_value $target_gpio 1
+			;;
+		low)
+			echo "Set power enable pin as [low] status for slot #${1}"
+			gpio_set_value $target_gpio 0
+			;;
+		# Get
+		"")
+			ret=$(gpio_get_value $target_gpio)
+			case $ret in
+				0)
+					echo "Slot #${1} power enable status is [low]"
+					;;
+				1)
+					echo "Slot #${1} power enable status is [high]"
+					;;
+				*) 
+					echo "Unknown power enable status"
+					return 1
+					;;
+			esac
+			;;
+		*)
+			echo "Unknown enable status"
+			return 1
+			;;
+	esac
+}
+
+do_airplane() {
+	if [[ ${#AIRPLANE_TBL[@]} -eq 0 ]]; then
+		not_support
+		return
+	fi
+
+	local slot=$(($1 - 1))
+	local state=$2
+	local target_gpio=$($gpc ${AIRPLANE_TBL[$slot]})
+
+	if [ -z $target_gpio ]; then
+		echo "Unknown Module Slot $slot"
+		return 1
+	fi
+
+	case $state in
+		# Set
+		high)
+			echo "Set airplane pin as [high] (normal mode) status for slot #${1}"
+			gpio_set_value $target_gpio 1
+			;;
+		low)
+			echo "Set airplane pin as [low] (airplan mode) status for slot #${1}"
+			gpio_set_value $target_gpio 0
+			;;
+		# Get
+		"")
+			ret=$(gpio_get_value $target_gpio)
+			case $ret in
+				0)
+					echo "Slot #${1} airplane status is [low] (airplan mode)"
+					;;
+				1)
+					echo "Slot #${1} airplane status is [high] (normal mode)"
+					;;
+				*) 
+					echo "Unknown airplane status"
+					return 1
+					;;
+			esac
+			;;
+		*)
+			echo "Unknown airplane status"
+			return 1
+			;;
+	esac
+}
+
+do_get_module_status() {
+	if [[ ${#ALIVE_EM9190_TBL[@]} -eq 0 ]] \
+		|| [[ ${#ALIVE_FN980_TBL[@]} -eq 0 ]] \
+		|| [[ ${#ALIVE_RM500_TBL[@]} -eq 0 ]] \
+		|| [[ ${#CONFIG_0_TBL[@]} -eq 0 ]] \
+		|| [[ ${#CONFIG_1_TBL[@]} -eq 0 ]] \
+		|| [[ ${#CONFIG_2_TBL[@]} -eq 0 ]] \
+		|| [[ ${#CONFIG_3_TBL[@]} -eq 0 ]]; then
+		not_support
+		return
+	fi
+
+	local slot=$(($1 - 1))
+	local em9190_gpio=$($gpc ${ALIVE_EM9190_TBL[$slot]})
+	local fn980_gpio=$($gpc ${ALIVE_FN980_TBL[$slot]})
+	local rm500_gpio=$($gpc ${ALIVE_RM500_TBL[$slot]})
+	local config0_gpio=$($gpc ${CONFIG_0_TBL[$slot]})
+	local config1_gpio=$($gpc ${CONFIG_1_TBL[$slot]})
+	local config2_gpio=$($gpc ${CONFIG_2_TBL[$slot]})
+	local config3_gpio=$($gpc ${CONFIG_3_TBL[$slot]})
+
+	if [ -z $em9190_gpio ] \
+		|| [ -z $fn980_gpio ] \
+		|| [ -z $rm500_gpio ] \
+		|| [ -z $config0_gpio ] \
+		|| [ -z $config1_gpio ] \
+		|| [ -z $config2_gpio ] \
+		|| [ -z $config3_gpio ]; then
+		echo "Unknown Module Slot $slot"
+		return 1
+	fi
+
+	echo "Module status on slot #${1}:"
+	echo -e "EM9190=$(gpio_get_value $em9190_gpio)"
+	echo -e "FN980=$(gpio_get_value $fn980_gpio)"
+	echo -e "RM500=$(gpio_get_value $rm500_gpio)"
+	echo -e "CONFIG_0=$(gpio_get_value $config0_gpio)"
+	echo -e "CONFIG_1=$(gpio_get_value $config1_gpio)"
+	echo -e "CONFIG_2=$(gpio_get_value $config2_gpio)"
+	echo -e "CONFIG_3=$(gpio_get_value $config3_gpio)"
+}
+
+do_sim_sel() {
+	if [[ ${#SIM_SEL_TBL[@]} -eq 0 ]]; then
+		not_support
+		return
+	fi
+
+	local slot=$(($1 - 1))
+	local sim_slot_num=$2
+	local sim_slot_gpio=$($gpc ${SIM_SEL_TBL[$slot]})
+
+	if [ -z $sim_slot_gpio ]
+        then
+                echo "Unknown Module Slot '$1'"
+                return 1
+        fi
+
+	case $sim_slot_num in
+		# Set SIM slot A/B
+		1)
+			echo "Set SIM side A on slot #${1}"
+			gpio_set_value $sim_slot_gpio 0
+			;;
+		2)
+			echo "Set SIM side B on slot #${1}"
+			gpio_set_value $sim_slot_gpio 1
+			;;
+		# Get SIM slot A/B
+		"")
+			ret=$(gpio_get_value $sim_slot_gpio)
+			case $ret in
+				1)
+					echo "Get SIM side B on slot #${1}"
+					;;
+				0)
+					echo "Get SIM side A on slot #${1}"
+					;;
+				*) 
+					echo "unknown"
+					return 1 
+					;;
+			esac
+			;;
+		*)
+			echo "Unknown SIM ID '$1'"
+                	return 1
+			;;
+	esac
+}
+
+do_action() {
+	if [ $NUM_OF_MODULE_SLOTS -eq 0 ]; then
+                echo "No module slot on this device." >&2
+                return 1
+        fi
+
+	local action=$1
+	local slot=$2
+	local arg=$3
+
+        if ! is_slot_valid $slot; then
+                echo "Error: Invalid slot index: $slot" >&2
+                return 1
+        fi
+
+	if [[ $action == "RESET" ]]; then
+		do_reset $slot $arg
+	elif [[ $action == "PWREN" ]]; then
+		do_pwren $slot $arg
+	elif [[ $action == "TURNON" ]]; then
+		do_turnon $slot $arg
+	elif [[ $action == "AIRPLANE" ]]; then
+		do_airplane $slot $arg
+	elif [[ $action == "SIM_SEL" ]]; then
+		do_sim_sel $slot $arg
+	elif [[ $action == "MOD_STATUS" ]]; then
+		do_get_module_status $slot
+	else
+		echo "Error: Unknown action: ${action}" >&2
+		return 1
+	fi
+}
+
+# Bind CP2112 USB-to-I2C driver for PCA9535
+_bind_cp2112_driver() {
+	local addr=$1
+
+	if ! $(is_module_loaded hid_cp2112); then
+		echo "hid_cp2112 driver is not loaded."
+		exit 1
+	fi
+
+	if ! $(is_module_loaded gpio_pca953x); then
+		echo "gpio_pca953x driver is not loaded."
+		exit 1
+	fi
+
+	for filename in /sys/bus/i2c/devices/i2c-*/name; do
+		i2c_devname=$(cat ${filename})
+		if [[ $i2c_devname == *"CP2112"* ]]; then
+			i2c_devpath=$(echo ${filename%/*})
+			i2c_num=$(echo ${i2c_devpath} | cut -d '-' -f2)
+			if [[ ! -e "${i2c_devpath}/${i2c_num}-00${addr##0x}" ]]; then
+				echo "pca9535 $addr" > ${i2c_devpath}/new_device
+			fi
+		fi
+	done
+}
+
+init_product() {
+	case $TARGET_PRODUCT in
+		V3000)
+			_bind_cp2112_driver 0x26
+			_bind_cp2112_driver 0x27
+			;;
+	esac
+}
+
+while true
+do
+        case $1 in
+                -s|--slot)
+			slot=$2
+                        shift 2
+                        ;;
+                -p|--pwren)
+                        case $2 in
+                                "")
+					arg=""
+					shift
+					;;
+                                *)
+					arg=$2;
+					shift 2
+					;;
+                        esac
+			action="PWREN"
+                        ;;
+                -r|--reset)
+                        case $2 in
+                                "")
+					arg=""
+					shift
+					;;
+                                *)
+					arg=$2;
+					shift 2
+					;;
+                        esac
+			action="RESET"
+                        ;;
+                -t|--turnon)
+                        case $2 in
+                                "")
+					arg=""
+					shift
+					;;
+                                *)
+					arg=$2;
+					shift 2
+					;;
+                        esac
+			action="TURNON"
+                        ;;
+                -a|--airplane)
+                        case $2 in
+                                "")
+					arg=""
+					shift
+					;;
+                                *)
+					arg=$2;
+					shift 2
+					;;
+                        esac
+			action="AIRPLANE"
+                        ;;
+                -i|--sim)
+                        case $2 in
+                                "")
+					arg=""
+					shift
+					;;
+                                *)
+					arg=$2;
+					shift 2
+					;;
+                        esac
+			action="SIM_SEL"
+                        ;;
+                -m|--mod_status)
+                        case $2 in
+                                "")
+					arg=""
+					shift
+					;;
+                        esac
+			action="MOD_STATUS"
+                        ;;
+                "")
+                        break
+                        ;;
+                *)
+                        usage
+			exit 1
+                        ;;
+        esac
+done
+
+load_product_config
+init_product
+
+if [ -z "${slot}" ] || [ -z "${action}" ]; then
+	usage
+	exit 1
+fi
+
+TARGET_SLOT=$(($slot - 1))
+do_action $action $slot $arg

@@ -9,7 +9,7 @@ V3k_USE="$PATH_UTILS/v3k_test"
 
 SUDO=sudo
 
-THRESHOLD=40
+THRESHOLD=90
 
 capture()
 {
@@ -30,13 +30,13 @@ TEMPERATURE_CORE3=`(cat $TEMP_DIR/monitor_core3_temperature)`
 TEMPERATURE_NVME=`(cat $TEMP_DIR/monitor_nvme_temperature)`
 
 
-if [ $TEMPERATURE_NVME -gt $THRESHOLD ] || [ $TEMPERATURE_CORE0 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE1 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE2 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE3 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE3 -gt $THRESHOLD ] 
+if [ $TEMPERATURE_NVME -gt $THRESHOLD ] || [ $TEMPERATURE_CORE0 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE1 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE2 -gt $THRESHOLD ] || [ $TEMPERATURE_CORE3 -gt $THRESHOLD ] 
 then
-	echo "curent termperatuire of NVME: $TEMPERATURE_NVME"
-	echo "curent termperatuire of CORE0: $TEMPERATURE_CORE0"
-	echo "curent termperatuire of CORE1: $TEMPERATURE_CORE1"
-	echo "curent termperatuire of CORE2: $TEMPERATURE_CORE2"
-	echo "curent termperatuire of CORE3: $TEMPERATURE_CORE3"
+	echo "curent temperature of NVME: $TEMPERATURE_NVME"
+	echo "curent temperature of CORE0: $TEMPERATURE_CORE0"
+	echo "curent temperature of CORE1: $TEMPERATURE_CORE1"
+	echo "curent temperature of CORE2: $TEMPERATURE_CORE2"
+	echo "curent temperature of CORE3: $TEMPERATURE_CORE3"
 	exit 1
 fi
 

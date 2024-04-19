@@ -1,7 +1,7 @@
 #!/bin/bash
-TOP=/home/moxa/young/v3000_package
-SUDO=sudo
 
+	
+SUDO=sudo
 
 
 lsmod | grep gpio_pca953x > /dev/null 2>&1 
@@ -51,7 +51,7 @@ then
 	exit 0
 fi
 
-${SUDO} ${TOP}/mx-m2b-module-ctl -s ${SLOT} -t low
+${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -t low
 
 while [  -e $DEV_AT_PATH  ];
 do
@@ -67,6 +67,6 @@ do
 done
 
 
-${SUDO} ${TOP}/mx-m2b-module-ctl -s ${SLOT} -r low
-${SUDO} ${TOP}/mx-m2b-module-ctl -s ${SLOT} -p low
+${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -r low
+${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -p low
 

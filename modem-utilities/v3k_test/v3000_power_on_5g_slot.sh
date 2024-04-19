@@ -1,6 +1,8 @@
 #!/bin/bash
 
-TOP=/home/moxa/young/v3000_package
+source PATH_for_NTU_exp
+
+PATH_UTILS=/home/moxa/young/v3000_package
 SUDO=sudo
 
 lsmod | grep gpio_pca953x > /dev/null 2>&1
@@ -37,14 +39,14 @@ fi
 #insmod /home/moxa/young/v3000_package/repo/moxa-gpio-pca953x-driver/gpio-pca953x.ko
 GET_GPIO_SLOT $INTERFACE
 
-${SUDO} ${TOP}/mx-m2b-module-ctl -s ${SLOT} -p high
+${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -p high
 sleep 0.05
-${SUDO} ${TOP}/mx-m2b-module-ctl -s ${SLOT} -t high
-${SUDO} ${TOP}/mx-m2b-module-ctl -s ${SLOT} -r high
+${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -t high
+${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -r high
 
 $PATH_UTILS/check_quectel_exist.sh -i $INTERFACE
 #while true; do
-#	val=$(${TOP}/mx-m2b-module-ctl -s 1 -m | grep "FN980" | cut -d '=' -f 2)
+#	val=$(${PATH_UTILS}/mx-m2b-module-ctl -s 1 -m | grep "FN980" | cut -d '=' -f 2)
 #	if [ "$val" == "1" ]; then
 #		break
 #	fi
