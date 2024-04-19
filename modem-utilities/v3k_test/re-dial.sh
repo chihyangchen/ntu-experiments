@@ -94,18 +94,19 @@ while true; do
 	sleep 5
 
 	#--------------reset module---------------
-        echo "[ re-dial ]: start resetting module"
-	if [ $flight_mode_counter -ge 2 ]; then
+        if [ $flight_mode_counter -ge 2 ]; then
 		while [ $reset_counter -lt 2 ]; do
+			echo "[ re-dial ]: start resetting module"
                 	ATCMD_filter "at+cfun=1,1" "1"
                 	reset_status=$?
 
                 	if [ "$reset_status" == "0" ]; then
-                        	echo "[ re-dial ]: reset module success"
                         	((reset_counter=0))
+				echo "[ re-dial ]: waiting for module reset for 20s..."
+			        sleep 20
                         	break
                 	else
-                        	echo "[ re-dial ]: reset mode failed, start reading CPU temperature"
+                        	echo "[ re-dial ]: reset mode failed"
                         	((reset_counter++))
                 	fi
         	done
@@ -115,7 +116,7 @@ while true; do
 
 	#------------------toggle GPIO------------------------
 	if [ $reset_counter -ge 2 ]; then
-		#read CPU temperature
+		echo "[ re-dial ]: start reading CPU temperature"
 		$PATH_UTILS/v3k_test/check_temperature.sh
 		CPU_temperature_status=$?
 		if [ "$CPU_temperature_status" != "0" ]; then
@@ -137,10 +138,8 @@ while true; do
 		fi
 
 	fi
-	#--------------end of toggle GPIO-------------------------
+	#--------------end of toggle GPIO-----------------------
 
-	echo "[ re-dial ]: waiting for module reset..."
-	sleep 20
 	$PATH_UTILS/check_quectel_exist.sh -i $INTERFACE
 
 	#-------SIM check------------------
@@ -156,6 +155,7 @@ while true; do
     		fi
         else
 		#--------------dial---------------
+		echo "[ re-dial ]: start dialing"
         	${SUDO} rm -rf $PATH_TEMP_DIR/temp/temp*$INTERFACE
         	$PATH_UTILS/dial-qmi.sh -i $INTERFACE
 		#-----------end of dial-----------         
@@ -163,6 +163,6 @@ while true; do
 	#----------end of SIM check-----------
     fi
 
-    # 等待 10 秒pin
+    # pin out per 10s
     sleep 10
 done
