@@ -29,7 +29,9 @@ then
     echo "missing argument"
     helpFunction
 fi
-
+INTERVAL=0.5
+COUNT=0
+FAIL_TRY=180
 
 GET_AT_PATH $INTERFACE
 
@@ -38,7 +40,7 @@ do
 #    echo "$INTERFACE module exists."
 #else
 	echo "No related module"
-	sleep 0.5
+	sleep $INTERVAL
 done
 
 while [ "$result" != "${isOK}" ]
@@ -57,7 +59,12 @@ do
 		echo "module AT port ready"
 	else
 		echo "module AT port not ready"
-		sleep 0.2
+		let COUNT+=1
+		sleep $INTERVAL
+	fi
+	if [ $COUNT -gt $FAIL_TRY ]
+	then
+		exit 1
 	fi
 done
 `(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c ATE1 -t 5000)` > /dev/null 2>&1

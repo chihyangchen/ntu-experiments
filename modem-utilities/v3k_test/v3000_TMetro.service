@@ -4,8 +4,8 @@ After=local-fs.target
 
 [Service]
 Type=oneshot
-ExecStart=/bin/bash /usr/local/bin/v3000_rm500q_slot_auto.sh START 
-ExecStop=/bin/bash /usr/local/bin/v3000_rm500q_slot_auto.sh STOP
+ExecStart=/bin/bash /usr/local/bin/v3000_TMetro.sh START 
+ExecStop=/bin/bash /usr/local/bin/v3000_TMetro.sh STOP
 RemainAfterExit=yes
 
 [Install]

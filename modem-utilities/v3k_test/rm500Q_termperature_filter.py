@@ -55,22 +55,22 @@ if __name__ == "__main__":
 #				print(temp_system)
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_nvme_1.append(temp_system[0][-6:])
+				l_sensor_nvme_1.append(temp_system[0][-8:].split("+")[1])
 #				print(l_sensor_nvme_1)
 			elif (temp_system[0] == target_nvme[1]):
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_nvme_2.append(temp_system[0][-5:])
+				l_sensor_nvme_2.append(temp_system[0][-8:].split("+")[1])
 #				print(temp_system)
 			elif (temp_system[0] == target_nvme[2]):
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_nvme_3.append(temp_system[0][-5:])
+				l_sensor_nvme_3.append(temp_system[0][-8:].split("+")[1])
 #				print(temp_system)
 			elif (temp_system[0] == target_nvme[3]):
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_nvme_4.append(temp_system[0][-5:])
+				l_sensor_nvme_4.append(temp_system[0][-8:].split("+")[1])
 #				print(temp_system)
 
 
@@ -78,23 +78,23 @@ if __name__ == "__main__":
 #				print(temp_system)
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_core_0.append(temp_system[0][-6:])
+				l_sensor_core_0.append(temp_system[0][-8:].split("+")[1])
 							
 			elif (temp_system[0] == target_core[1]):
 #				print(temp_system)
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_core_1.append(temp_system[0][-6:])
+				l_sensor_core_1.append(temp_system[0][-8:].split("+")[1])
 			elif (temp_system[0] == target_core[2]):
 #				print(temp_system)
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_core_2.append(temp_system[0][-6:])
+				l_sensor_core_2.append(temp_system[0][-8:].split("+")[1])
 			elif (temp_system[0] == target_core[3]):
 #				print(temp_system)
 				temp_system=temp_system[1]
 				temp_system=temp_system.split("°C")
-				l_sensor_core_3.append(temp_system[0][-6:])
+				l_sensor_core_3.append(temp_system[0][-8:].split("+")[1])
 #				print(l_sensor_core_3)
 
 		elif (len(word) > 2 and word[1] == target[1]):

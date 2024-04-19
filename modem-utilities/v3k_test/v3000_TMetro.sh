@@ -43,6 +43,9 @@ echo "$INTERFACE_2"
 
 if [ "$1" == "START" ]
 then
+	echo "mount ssd"
+	${SUDO} mount /dev/sda1 /mnt
+	sleep 3
 	echo "start enabling m.2 slots"
 	${SUDO} rm -f $PATH_TEMP_DIR/temp/* 
 	# slot 1 enable &
@@ -67,6 +70,10 @@ then
 	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_off_5g_slot.sh -i $INTERFACE_1 &
 	# slot 2 disable
 	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_off_5g_slot.sh -i $INTERFACE_2
+
+	${SUDO} sync
+	sleep 3
+	${SUDO} umount /mnt
 
 	${SUDO} rm -f $PATH_TEMP_DIR/temp/* 
 fi
