@@ -49,34 +49,30 @@ done
 
 #echo $INTERFACE
 
-# 初始化连续失败次数
+# init counter
 ping_fail_counter=0
 flight_mode_counter=0
 reset_counter=0
 SIM_check_counter=0
-
-echo $(date)
+GPIO_toggle_counter=0
 
 #--------------ping loop start-----------
 while true; do
-    # 执行 ping 命令并输出结果到/dev/null，不显示在终端上
+    
     ping -W 1 -I $INTERFACE -c 1 8.8.8.8 > /dev/null
 
-    # 检查 ping 命令的退出状态，如果成功则打印消息，否则打印失败消息
     if [ $? -eq 0 ]; then
-        echo "Ping successful - $(date)"
-        # 重置连续失败次数
+        echo "[ re-dial ]: Ping successful - $(date)"
         ping_fail_counter=0
     else
-        echo "Ping failed - $(date)"
-        # 连续失败次数加1
+        echo "[ re-dial ]: Ping failed - $(date)"
         ((ping_fail_counter++))
     fi
 
-    # 如果连续失败次数超过3次（即连续超过30秒），则打印"network failure"并退出脚本
+    # ping out per 10s, ping fail > 30s, parameter can be modify
     if [ $ping_fail_counter -ge 1 ]; then
 	ping_fail_counter=0
-        echo "Network failure"
+        echo "[ re-dial ]: Network failure"
         
 	#-----------toggle flight mode--------------
 	while [ $flight_mode_counter -lt 2 ]; do
@@ -84,32 +80,32 @@ while true; do
 		toggle_status=$?
 		
 		if [ "$toggle_status" == "0" ]; then
-    			echo "toggle_flight_mode success"
+    			echo "[ re-dial ]: toggle_flight_mode success"
 			((flight_mode_counter=0))
 			break
 		else
-    			echo "toggle_flight_mode failed"
+    			echo "[ re-dial ]: toggle_flight_mode failed"
 			((flight_mode_counter++))
 		fi
 	done
 	#---------end of toggle flight mode-----------
 	
-	echo "waiting for flight mode on..."
+	echo "[ re-dial ]: waiting for flight mode on..."
 	sleep 5
 
 	#--------------reset module---------------
-        echo "start resetting module"
+        echo "[ re-dial ]: start resetting module"
 	if [ $flight_mode_counter -ge 2 ]; then
 		while [ $reset_counter -lt 2 ]; do
                 	ATCMD_filter "at+cfun=1,1" "1"
                 	reset_status=$?
 
                 	if [ "$reset_status" == "0" ]; then
-                        	echo "reset module success"
+                        	echo "[ re-dial ]: reset module success"
                         	((reset_counter=0))
                         	break
                 	else
-                        	echo "reset mode failed, start reading CPU temperature"
+                        	echo "[ re-dial ]: reset mode failed, start reading CPU temperature"
                         	((reset_counter++))
                 	fi
         	done
@@ -122,27 +118,33 @@ while true; do
 		#read CPU temperature
 		$PATH_UTILS/v3k_test/check_temperature.sh
 		CPU_temperature_status=$?
-		echo "temp=$?"
 		if [ "$CPU_temperature_status" != "0" ]; then
-			 exit 1 # add log & alarm
+			echo "[ re-dial ]: CPU temperature is too high" 
+			exit 1 # add log & alarm
 		else
-			echo "waiting for module power off at the most 30 sec..."
+			echo "[ re-dial ]: CPU temperature is normal"
+			echo "[ re-dial ]: waiting for module power off at the most 30 sec..."
 			$PATH_UTILS/v3k_test/v3000_power_off_5g_slot.sh -i $INTERFACE
-			echo "module power off completed"
-			echo "waiting for module power on"
+			echo "[ re-dial ]: module power off completed"
+			echo "[ re-dial ]: waiting for module power on"
 			$PATH_UTILS/v3k_test/v3000_power_on_5g_slot.sh -i $INTERFACE
-			echo "module power on completed"
+			echo "[ re-dial ]: module power on completed"
+			((GPIO_toggle_counter++))
+
+			if [ $GPIO_toggle_counter -lt 2 ]; then
+				exit 1 # add log & alarm
+			fi
 		fi
 
 	fi
 	#--------------end of toggle GPIO-------------------------
 
-	echo "waiting for module reset..."
+	echo "[ re-dial ]: waiting for module reset..."
 	sleep 20
 	$PATH_UTILS/check_quectel_exist.sh -i $INTERFACE
 
 	#-------SIM check------------------
-	echo "start SIM check"
+	echo "[ re-dial ]: start SIM check"
 	ATCMD_filter "at+cpin?" "4"
 	SIMcheck_status=$?
 
