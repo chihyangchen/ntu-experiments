@@ -2,7 +2,7 @@
 
 	
 SUDO=sudo
-
+V3K_USE="v3k_test"
 
 lsmod | grep gpio_pca953x > /dev/null 2>&1 
 if [ $? ]
@@ -51,7 +51,7 @@ then
 	exit 0
 fi
 
-${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -t low
+${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -t low
 
 while [  -e $DEV_AT_PATH  ];
 do
@@ -67,6 +67,6 @@ do
 done
 
 
-${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -r low
-${SUDO} ${PATH_UTILS}/mx-m2b-module-ctl -s ${SLOT} -p low
+${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -r low
+${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -p low
 
