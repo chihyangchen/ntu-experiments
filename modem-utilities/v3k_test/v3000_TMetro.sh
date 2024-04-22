@@ -54,7 +54,7 @@ then
 	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_on_5g_slot.sh -i $INTERFACE_2 &
 	wait
 	# slot 1 connect &
-	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_1 -d &
+	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_1 -d 
 	wait
 	# slot 2 connect
 	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_2 
@@ -70,7 +70,7 @@ then
 	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_off_5g_slot.sh -i $INTERFACE_1 &
 	# slot 2 disable
 	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_off_5g_slot.sh -i $INTERFACE_2
-
+	wait
 	${SUDO} sync
 	sleep 3
 	${SUDO} umount /mnt
