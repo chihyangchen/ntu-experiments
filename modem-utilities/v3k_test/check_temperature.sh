@@ -19,8 +19,8 @@ capture()
 }
 
 filename="monitor_temperature"
-#capture |${SUDO} tee "$TEMP_DIR/$filename" > /dev/null 2>&1
 
+capture |${SUDO} tee "$TEMP_DIR/$filename" > /dev/null 2>&1
 ${SUDO} $V3k_USE/temperature_filter_when_error.py  $TEMP_DIR/$filename  $TEMP_DIR/
 
 TEMPERATURE_CORE0=`(cat $TEMP_DIR/monitor_core0_temperature)`
