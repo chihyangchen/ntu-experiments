@@ -19,12 +19,13 @@ helpFunction()
     exit 1 # Exit script after printing help
 }
 
-while getopts "i:c:t:" opt
+while getopts "i:c:t:s" opt
 do
     case "$opt" in
         i ) INTERFACE="$OPTARG" ;;
         c ) cmd="$OPTARG" ;;
         t ) AT_TIMEOUT="$OPTARG" ;;
+        s ) SMS="USING" ;;
         ? ) helpFunction ;;
     esac
 done
@@ -35,12 +36,20 @@ then
 fi
 
 LOCK_FILE=$TOP/temp/$INTERFACE.lock
+SMS_LOCK_FILE=$TOP/temp/sms-$INTERFACE.lock
 
 GET_AT_PATH $INTERFACE
+if ! [ "$SMS" == "USING" ]
+then
+	while [ -f $SMS_LOCK_FILE ]; 
+	do
+		echo "SMS is sending. please wait!"
+		sleep 0.5 
+	done
+fi
 
 while [ -f $LOCK_FILE ]; 
 do
-#if [ -f $LOCK_FILE ]; then
 	echo "device port is occupied!"
 	sleep 0.5 
 done
