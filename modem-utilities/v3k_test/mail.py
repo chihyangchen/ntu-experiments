@@ -1,9 +1,12 @@
+#!/usr/bin/python3
+
 from email.message import EmailMessage
 import mimetypes
 import smtplib
 import subprocess
 import sys
-
+# python3 mail.py  DEVICE_NAME  REASON(1-x)  [Attached file]
+# REASON: 0: Regular report, 1: Loss connection, 2: SIM error, 3. GPIO toggling, 4: Thermal too High 
 
 gmail_user = "chihyangchen0@gmail.com"
 gmail_app_password = "xxxxxxxxxxxxxxxxxxxxx"
@@ -11,26 +14,30 @@ gmail_app_password = "xxxxxxxxxxxxxxxxxxxxx"
 sender = 'chihyangchen0@gmail.com'
 receivers = ['chihyang78@gmail.com']
 
-reason = ""
-dev = ""
+REASON = ""
+DEV = ""
 
 if len(sys.argv) > 1:
-    dev = sys.argv[1]
+    DEV = sys.argv[1]
 if len(sys.argv) > 2:
-    if sys.argv[2] == "0":
-        reason = " Regular report: "
-    elif sys.argv[2] == "1":
-        reason = " Loss connection: "
+    if sys.argv[2] == "1":
+        REASON = " Loss connection: "
     elif sys.argv[2] == "2":
-        reason = " SIM error: "
+        REASON = " Flight Mode Toggling: "
+    elif sys.argv[2] == "3":
+        REASON = " Pwr GPIO Toggling: "
+    elif sys.argv[2] == "4":
+        REASON = " SIM ERROR: "
+    elif sys.argv[2] == "5":
+        REASON = " Thermal alarm: "
     else:
-        reason = " Just to send: "
+        REASON = " Normal send: "
 
 
 email = EmailMessage()
 email["From"] = sender #"chihyangchen0@gmail.com"
 email["To"] = receivers #'chihyang78@gmail.com'
-email["Subject"] = "Taoyuan Metro PoC -" + dev
+email["Subject"] = "Taoyuan Metro PoC -" + DEV
 
 proc = subprocess.Popen(['date', '+%Y-%m-%d_%H-%M-%S'],stdout=subprocess.PIPE, shell=True)
 (time,err) = proc.communicate()
@@ -38,7 +45,7 @@ current_time=time.decode("UTF-8")
 #print(current_time)
 body ="""
 
-""" + reason + """
+""" + REASON + """
 """ + current_time
 
 email.set_content(body)
