@@ -61,7 +61,7 @@ function UPDATE_GW() {
 		fi
 	#fi
 	### IF use two module, comment the belowing code
-	elif [ $TEST == "test" ]
+	elif [ "$TEST" == "test" ]
 	then	
 		if [ "$1" == "$TO_INTERFACE" ]
 		then
