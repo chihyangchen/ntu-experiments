@@ -2,7 +2,7 @@
 
 
 source PATH_for_NTU_exp
-PWR_CONTROL="v3k_test"
+V3k_USE="v3k_test"
 SUDO=sudo
 INTERFACE_1=""
 INTERFACE_2=""
@@ -49,10 +49,12 @@ then
 	echo "start enabling m.2 slots"
 	${SUDO} rm -f $PATH_TEMP_DIR/temp/* 
 	# slot 1 enable &
-	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_on_5g_slot.sh -i $INTERFACE_1 &
+	${SUDO} $PATH_UTILS/$V3k_USE/v3000_power_on_5g_slot.sh -i $INTERFACE_1 &
 	# slot 2 enable &
-	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_on_5g_slot.sh -i $INTERFACE_2 &
+	${SUDO} $PATH_UTILS/$V3k_USE/v3000_power_on_5g_slot.sh -i $INTERFACE_2 &
 	wait
+	${SUDO} $PATH_UTILS/$V3k_USE/module-default-setting.sh -i $INTERFACE_1  
+	${SUDO} $PATH_UTILS/$V3k_USE/module-default-setting.sh -i $INTERFACE_2 
 	# slot 1 connect &
 	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_1 -d 
 	wait
@@ -67,9 +69,9 @@ then
 	${SUDO} $PATH_UTILS/disconnect-qmi.sh -i $INTERFACE_2 &
 	wait
 	# slot 1 disable
-	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_off_5g_slot.sh -i $INTERFACE_1 &
+	${SUDO} $PATH_UTILS/$V3k_USE/v3000_power_off_5g_slot.sh -i $INTERFACE_1 &
 	# slot 2 disable
-	${SUDO} $PATH_UTILS/$PWR_CONTROL/v3000_power_off_5g_slot.sh -i $INTERFACE_2
+	${SUDO} $PATH_UTILS/$V3k_USE/v3000_power_off_5g_slot.sh -i $INTERFACE_2
 	wait
 	${SUDO} sync
 	sleep 3
