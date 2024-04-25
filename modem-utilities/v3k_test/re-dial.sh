@@ -56,7 +56,21 @@ reset_counter=0
 SIM_check_counter=0
 GPIO_toggle_counter=0
 
-#--------------ping loop start-----------
+#--------------check if warning log exists------------ 
+if [ ! -f ~/temp/warning_log.txt ]; then
+    touch ~/temp/warning_log.txt
+fi
+#----------end of check if warning log exists---------
+
+#---------------define corresponding interface----------------
+if [ "${INTERFACE:2:3}" == "1" ]; then
+    new_INTERFACE="${INTERFACE:0:2}2"
+else
+    new_INTERFACE="${INTERFACE:0:2}1"
+fi
+#-----------end of define corresponding interface-------------
+
+#--------------ping loop start-----------------
 while true; do
     
     ping -W 1 -I $INTERFACE -c 1 8.8.8.8 > /dev/null
@@ -73,7 +87,9 @@ while true; do
     if [ $ping_fail_counter -ge 1 ]; then
 	ping_fail_counter=0
         echo "[ re-dial ]: Network failure"
-        
+	sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
+        sudo python3 v3k_test/mail.py $INTERFACE 1 ~/temp/warning_log.txt #loss connection alarm
+	        
 	#-----------toggle flight mode--------------
 	while [ $flight_mode_counter -lt 2 ]; do
 		toggle_flight_mode "$INTERFACE"
@@ -95,9 +111,11 @@ while true; do
 
 	#--------------reset module---------------
         if [ $flight_mode_counter -ge 2 ]; then
+		sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
+                sudo python3 v3k_test/mail.py $INTERFACE 2 ~/temp/warning_log.txt # flight mode toggle error alarm		
 		while [ $reset_counter -lt 2 ]; do
 			echo "[ re-dial ]: start resetting module"
-                	ATCMD_filter "at+cfun=1,1" "1"
+                	ATCMD_filter "at+cfin=1,1" "1"
                 	reset_status=$?
 
                 	if [ "$reset_status" == "0" ]; then
@@ -120,8 +138,11 @@ while true; do
 		$PATH_UTILS/v3k_test/check_temperature.sh
 		CPU_temperature_status=$?
 		if [ "$CPU_temperature_status" != "0" ]; then
-			echo "[ re-dial ]: CPU temperature is too high" 
-			exit 1 # add log & alarm
+			echo "[ re-dial ]: CPU temperature is too high"
+			# log has been written in check_temperature.sh
+			sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
+			sudo python3 v3k_test/mail.py $INTERFACE 5 ~/temp/warning_log.txt # Thermal alarm	
+			exit 1
 		else
 			echo "[ re-dial ]: CPU temperature is normal"
 			echo "[ re-dial ]: waiting for module power off at the most 30 sec..."
@@ -131,15 +152,19 @@ while true; do
 			$PATH_UTILS/v3k_test/v3000_power_on_5g_slot.sh -i $INTERFACE
 			echo "[ re-dial ]: module power on completed"
 			((GPIO_toggle_counter++))
-
-			if [ $GPIO_toggle_counter -lt 2 ]; then
-				exit 1 # add log & alarm
+			
+			if [ $GPIO_toggle_counter -ge 2 ]; then
+				echo "time,`(date +%Y-%m-%d_%H-%M-%S)`" | tee -a $PATH_TEMP_DIR/temp/warning_log.txt  > /dev/null
+				echo "GPIO toggle" | tee -a $PATH_TEMP_DIR/temp/warning_log.txt > /dev/null
+				sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
+                        	sudo python3 v3k_test/mail.py $INTERFACE 3 ~/temp/warning_log.txt # GPIO toggle
+				exit 1
 			fi
 		fi
 
 	fi
 	#--------------end of toggle GPIO-----------------------
-
+	
 	$PATH_UTILS/check_quectel_exist.sh -i $INTERFACE
 
 	#-------SIM check------------------
@@ -149,15 +174,22 @@ while true; do
 
 	if [ "$SIMcheck_status" != "0" ]; then
 		((SIM_check_counter++))
+		
+		# add warning log
+		echo "time,`(date +%Y-%m-%d_%H-%M-%S)`" | tee -a $PATH_TEMP_DIR/temp/warning_log.txt > /dev/null
+		echo "SIM check error" | tee -a $PATH_TEMP_DIR/temp/warning_log.txt > /dev/null
 
 		if [ $SIM_check_counter -gt 2 ]; then
-        		exit 1 # add log & alarm
+			sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
+                        sudo python3 v3k_test/mail.py $INTERFACE 4 ~/temp/warning_log.txt # SIM check alarm
+	    		exit 1
     		fi
         else
 		#--------------dial---------------
 		echo "[ re-dial ]: start dialing"
-        	${SUDO} rm -rf $PATH_TEMP_DIR/temp/temp*$INTERFACE
-        	$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+        	#${SUDO} rm -rf $PATH_TEMP_DIR/temp/temp*$INTERFACE
+        	#$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+		$PATH_UTILS/auto-connect-test.sh -i $INTERFACE
 		#-----------end of dial-----------         
         fi
 	#----------end of SIM check-----------
