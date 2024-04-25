@@ -3,6 +3,8 @@
 
 import os
 import sys
+import subprocess,shlex
+
 
 SENDING_INTERFACE=sys.argv[1]
 PHONE=sys.argv[2]
@@ -36,7 +38,18 @@ else:
 	ERROR_INTERFACE = SENDING_INTERFACE	
 MESSAGE =  DEV + "-" + ERROR_INTERFACE + ":" + MESSAGE
 
+BASH_PATH="/home/moxa/young/ntu-experiments/modem-utilities/v3k_test"
+V3K_USE='/v3k_test/'
+
+with open('/usr/local/bin/PATH_for_NTU_exp','r') as p:
+    re=p.readlines()
+for line in re:
+    line = line.split('=')
+    if line[0] == 'PATH_UTILS':
+        BASH_PATH = line[1][1:-2] + V3K_USE
 print(MESSAGE)
+cmd = BASH_PATH + 'sms-send.sh -i ' + SENDING_INTERFACE + ' -n ' + PHONE + ' -m ' + MESSAGE
+result=subprocess.run(shlex.split(cmd))
+exit(result.returncode)
 
-
-#os.system('sms-send.sh -i ' + SENDING_INTERFACE + ' -n ' + PHONE + ' -m ' + MESSAGE)
+#os.system(BASH_PATH + 'sms-send.sh -i ' + SENDING_INTERFACE + ' -n ' + PHONE + ' -m ' + MESSAGE)
