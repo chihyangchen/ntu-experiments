@@ -5,7 +5,8 @@
 ###
 source PATH_for_NTU_exp
 SUDO=sudo
-ETH_GW="172.30.30.254"
+ETH_GW="172.30.30.25"
+#ETH_GW=""
 
 function PING_DEV() {
 	ping 8.8.8.8 -c 1 -W 1 -I $1
@@ -22,12 +23,13 @@ helpFunction()
 	exit 1 # Exit script after printing help
 }
 
-while getopts "f:t:T" opt
+while getopts "f:t:G:T" opt
 do
 	case "$opt" in
 		f ) FROM_INTERFACE="$OPTARG" ;;
 		t ) TO_INTERFACE="$OPTARG" ;;
 		T ) TEST="test" ;;
+		G ) ETH_GW="$OPTARG" ;;
 		? ) helpFunction ;;
 	esac
 done
@@ -59,21 +61,21 @@ function UPDATE_GW() {
 		fi
 	#fi
 	### IF use two module, comment the belowing code
-	elif [ $TEST == "test" ]
+	elif [ "$TEST" == "test" ]
 	then	
 		if [ "$1" == "$TO_INTERFACE" ]
 		then
 			TO_GW=$ETH_GW
-		
+			echo "$TO_GW"	
 		elif [ "$1" == "$FROM_INTERFACE" ]
 		then
 			FROM_GW=$ETH_GW
+			echo "$FROM_GW"	
 		fi
 	###  Above ######################################
 		
 	fi
 }
-
 function ROUTE_CHANGE() {   # 1 -> 2
 	echo -n "[ROUTE_CHANGE]: "
 	LC_GW_FROM=$FROM_GW
@@ -86,9 +88,12 @@ function ROUTE_CHANGE() {   # 1 -> 2
 	elif ! [[ $(ip route | grep default | grep $TO_INTERFACE) ]]
 	then		
 		${SUDO} ip route append default via $LC_GW_TO
+		sleep 0.1
 	fi
 	${SUDO} ip route del default dev $FROM_INTERFACE
+	sleep 0.1
 	${SUDO} ip route append default via $LC_GW_FROM	# add to the last
+	echo " From $FROM_INTERFACE to $TO_INTERFACE"	
 }
 
 function DNS_CHANGE() {
@@ -99,8 +104,8 @@ function DNS_CHANGE() {
 		DNS_PRIMARY=`(cat $wds_ip_filter | tail -3 | head -2 | head -1)`
 		DNS_SECONDARY=`(cat $wds_ip_filter | tail -3 | head -2 | tail -1)`
 	fi
-	echo "nameserver $DNS_PRIMARY" | ${SUDO} tee /etc/resolv.conf
-	echo "nameserver $DNS_SECONDARY" | ${SUDO} tee -a /etc/resolv.conf
+	echo "nameserver $DNS_PRIMARY" | ${SUDO} tee /etc/resolv.conf > /dev/null 2>&1
+	echo "nameserver $DNS_SECONDARY" | ${SUDO} tee -a /etc/resolv.conf > /dev/null 2>&1
 }
 
 

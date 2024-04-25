@@ -35,9 +35,9 @@ else:
 		TO_INTERFACE = sys.argv[3]
 		eth_GW = sys.argv[4]
 		if len(sys.argv) > 5 and sys.argv[5] == "B":
-			os.system(BASH_PATH + 'default-route-change-test.sh -f ' + TO_INTERFACE + ' -t ' + FROM_INTERFACE + ' -T -G ' + eth_GW)
+			os.system(BASH_PATH + 'default-route-change.sh -f ' + TO_INTERFACE + ' -t ' + FROM_INTERFACE + ' -T -G ' + eth_GW)
 		else:
-			os.system(BASH_PATH + 'default-route-change-test.sh -f ' + FROM_INTERFACE + ' -t ' + TO_INTERFACE + ' -T -G ' + eth_GW)
+			os.system(BASH_PATH + 'default-route-change.sh -f ' + FROM_INTERFACE + ' -t ' + TO_INTERFACE + ' -T -G ' + eth_GW)
 
 
 
