@@ -46,7 +46,10 @@ capture()
     echo "time,`(date +%Y-%m-%d_%H-%M-%S)`"
 	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+qtemp
 	sensors
+#	${SUDO} smartctl -A /dev/sda1 | grep "Temp"
 }
+${SUDO} modprobe drivetemp
+
 filename=$INTERFACE"_`(date +%Y-%m-%d_%H-%M-%S)`"
 if [ -z $delay ]
 then
