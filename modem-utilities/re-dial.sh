@@ -88,7 +88,7 @@ while true; do
 	ping_fail_counter=0
         echo "[ re-dial ]: Network failure"
 	sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
-        sudo python3 v3k_test/mail.py $INTERFACE 1 ~/temp/warning_log.txt #loss connection alarm
+        sudo python3 v3k_test/mail.py $INTERFACE 1 $PATH_TEMP_DIR/temp/warning_log.txt #loss connection alarm
 	        
 	#-----------toggle flight mode--------------
 	while [ $flight_mode_counter -lt 2 ]; do
@@ -112,7 +112,7 @@ while true; do
 	#--------------reset module---------------
         if [ $flight_mode_counter -ge 2 ]; then
 		sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
-                sudo python3 v3k_test/mail.py $INTERFACE 2 ~/temp/warning_log.txt # flight mode toggle error alarm		
+                sudo python3 v3k_test/mail.py $INTERFACE 2 $PATH_TEMP_DIR/temp/warning_log.txt # flight mode toggle error alarm		
 		while [ $reset_counter -lt 2 ]; do
 			echo "[ re-dial ]: start resetting module"
                 	ATCMD_filter "at+cfin=1,1" "1"
@@ -141,7 +141,7 @@ while true; do
 			echo "[ re-dial ]: CPU temperature is too high"
 			# log has been written in check_temperature.sh
 			sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
-			sudo python3 v3k_test/mail.py $INTERFACE 5 ~/temp/warning_log.txt # Thermal alarm	
+			sudo python3 v3k_test/mail.py $INTERFACE 5 $PATH_TEMP_DIR/temp/warning_log.txt # Thermal alarm	
 			exit 1
 		else
 			echo "[ re-dial ]: CPU temperature is normal"
@@ -157,7 +157,7 @@ while true; do
 				echo "time,`(date +%Y-%m-%d_%H-%M-%S)`" | tee -a $PATH_TEMP_DIR/temp/warning_log.txt  > /dev/null
 				echo "GPIO toggle" | tee -a $PATH_TEMP_DIR/temp/warning_log.txt > /dev/null
 				sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
-                        	sudo python3 v3k_test/mail.py $INTERFACE 3 ~/temp/warning_log.txt # GPIO toggle
+                        	sudo python3 v3k_test/mail.py $INTERFACE 3 $PATH_TEMP_DIR/temp/warning_log.txt # GPIO toggle
 				exit 1
 			fi
 		fi
@@ -181,7 +181,7 @@ while true; do
 
 		if [ $SIM_check_counter -gt 2 ]; then
 			sudo python3 v3k_test/default-route-change-utility.py $INTERFACE
-                        sudo python3 v3k_test/mail.py $INTERFACE 4 ~/temp/warning_log.txt # SIM check alarm
+                        sudo python3 v3k_test/mail.py $INTERFACE 4 $PATH_TEMP_DIR/temp/warning_log.txt # SIM check alarm
 	    		exit 1
     		fi
         else
