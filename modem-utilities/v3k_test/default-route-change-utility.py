@@ -26,8 +26,8 @@ if len(sys.argv) < 3:
 		TO_INTERFACE = FROM_INTERFACE[:-1] + "2"
 	else:
 		TO_INTERFACE = FROM_INTERFACE[:-1] + "1"
-#	os.system(BASH_PATH + 'default-route-change-test.sh -f ' + FROM_INTERFACE + ' -t ' + TO_INTERFACE)
-	cmd = BASH_PATH + 'default-route-change-test.sh -f ' + FROM_INTERFACE + ' -t ' + TO_INTERFACE
+#	os.system(BASH_PATH + 'default-route-change.sh -f ' + FROM_INTERFACE + ' -t ' + TO_INTERFACE)
+	cmd = BASH_PATH + 'default-route-change.sh -f ' + FROM_INTERFACE + ' -t ' + TO_INTERFACE
 	result=subprocess.run(shlex.split(cmd))
 	exit(result.returncode)
 else:
