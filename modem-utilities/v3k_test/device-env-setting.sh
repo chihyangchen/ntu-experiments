@@ -47,6 +47,10 @@ touch "${DEV}"
 cd "$utility_dir"
 ${SUDO} cp PATH_for_NTU_exp /usr/local/bin
 
+${SUDO} cp "$utility_dir/settings/70-persistent-net.rules" /etc/udev/rules.d/
+${SUDO} udevadm control --reload-rules
+${SUDO} udevadm trigger
+
 cd "$v3k_test_dir"
 ${SUDO} cp v3000_TMetro.sh /usr/local/bin
 ${SUDO} cp v3000_TMetro.service /etc/systemd/system

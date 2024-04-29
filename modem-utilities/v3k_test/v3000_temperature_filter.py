@@ -163,7 +163,6 @@ if __name__ == "__main__":
 	m_export.append(l_qfe_wtr_pa3_2)
 	
 	m_export.append(l_sensor_core_0)
-	m_export.append(l_sensor_core_0)
 	m_export.append(l_sensor_core_1)
 	m_export.append(l_sensor_core_2)
 	m_export.append(l_sensor_core_3)

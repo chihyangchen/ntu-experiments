@@ -46,6 +46,7 @@ then
 	echo "mount ssd"
 	${SUDO} mount /dev/sda1 /mnt
 	sleep 3
+	${SUDO} modprobe drivetemp
 	echo "start enabling m.2 slots"
 	${SUDO} rm -f $PATH_TEMP_DIR/temp/* 
 	# slot 1 enable &
