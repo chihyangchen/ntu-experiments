@@ -88,7 +88,7 @@ case "$1" in
         DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_54a942c6-if00-port0"
         ;;
     m42)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_4af8828e-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_4af8828e-if00-port0"
         ;;
 
     esac
@@ -132,28 +132,28 @@ case "$1" in
 function GET_GPS_PATH {
 case "$1" in
     m11)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if01-port0"
         ;;
     m12)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if01-port0"
         ;;
     m21)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if01-port0"
         ;;
     m22)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_6e8d46d0-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_6e8d46d0-if01-port0"
         ;;
     m31)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_48891fdc-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_48891fdc-if01-port0"
         ;;
     m32)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_86667477-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_86667477-if01-port0"
         ;;
     m41)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_54a942c6-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_54a942c6-if01-port0"
         ;;
     m42)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_4af8828e-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_4af8828e-if01-port0"
         ;;
 
     esac

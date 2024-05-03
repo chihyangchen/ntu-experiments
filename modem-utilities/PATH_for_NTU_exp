@@ -9,3 +9,9 @@ then
 	mkdir "$PATH_TEMP_DIR/temp"
 fi
 }
+function CHECK_my_SATA_dir() {
+if [ ! -d "$PATH_TEMP_DIR/my_SATA" ] 
+then
+	mkdir "$PATH_TEMP_DIR/my_SATA"
+fi
+}
