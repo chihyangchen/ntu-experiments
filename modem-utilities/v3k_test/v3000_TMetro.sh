@@ -2,6 +2,8 @@
 
 
 source PATH_for_NTU_exp
+source $PATH_UTILS/quectel-path.sh
+
 V3k_USE="v3k_test"
 SUDO=sudo
 INTERFACE_1=""
@@ -44,7 +46,8 @@ echo "$INTERFACE_2"
 if [ "$1" == "START" ]
 then
 	echo "mount ssd"
-	${SUDO} mount /dev/sda1 /mnt
+	${SUDO} mount /dev/sda1 $PATH_TEMP_DIR/my_SATA
+	${SUDO} chown moxa:moxa $PATH_TEMP_DIR/my_SATA
 	sleep 3
 	${SUDO} modprobe drivetemp
 	echo "start enabling m.2 slots"
@@ -60,7 +63,14 @@ then
 	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_1 -d 
 	wait
 	# slot 2 connect
-	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_2 
+	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_2
+
+	#SYSTEM GPS enable
+	#Enable GPS port to gpsd
+	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE_1 -c at+qgps=1 
+	GET_GPS_PATH $INTERFACE_1
+	${SUDO} gpsd -n $DEV_GPS_PATH
+ 
 elif [ "$1" == "STOP" ]
 then
 	echo "stop functions of m.2 slots"
