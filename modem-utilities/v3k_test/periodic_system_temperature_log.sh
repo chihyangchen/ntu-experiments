@@ -8,7 +8,7 @@
 # output: at command information
 #echo "Do NOT USE"
 #exit 0
-
+# remove the interface arg
 source PATH_for_NTU_exp
 source $PATH_UTILS/quectel-path.sh
 
@@ -25,22 +25,22 @@ helpFunction()
     exit 1 # Exit script after printing help
 }
 
-while getopts "i:t:" opt
+while getopts "t:" opt
 do
     case "$opt" in
-        i ) INTERFACE="$OPTARG" ;;
+#        i ) INTERFACE="$OPTARG" ;;
         t ) INTERVAL="$OPTARG" ;;
         ? ) helpFunction ;;
     esac
 done
 
-if [ -z "$INTERFACE" ]
-then
-    echo "missing argument"
-    helpFunction
-fi
+#if [ -z "$INTERVAL" ]
+#then
+#    echo "missing argument"
+#    helpFunction
+#fi
 
-PATH_OPERATION_LOG="/mnt"
+PATH_OPERATION_LOG="/home/moxa/my_SATA"
 DIR_OPERATION_LOG="system_log"
 if [ ! -d "$PATH_OPERATION_LOG/$DIR_OPERATION_LOG" ]
 then
@@ -50,6 +50,11 @@ fi
 FILENAME_OPERATION_LOG="op_log_"`(date +%Y-%m-%d)`".txt"
 PATH_WARNING_LOG="warning_$INTERFACE.txt"
 LOG_PATH_FILENAME="$PATH_OPERATION_LOG/$DIR_OPERATION_LOG/$FILENAME_OPERATION_LOG"
+if  [ -z $INTERVAL ]
+then
+	${SUDO}	bash log_func.sh -r
+	exit 0 
+fi
 if ! [ -z $INTERVAL ]
 then
 	${SUDO}	touch "$PATH_TEMP_DIR/temp/CONT_LOG"
