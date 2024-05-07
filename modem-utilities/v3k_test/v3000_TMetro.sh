@@ -86,7 +86,7 @@ then
 	wait
 	${SUDO} sync
 	sleep 3
-	${SUDO} umount /mnt
+	${SUDO} umount $PATH_TEMP_DIR/my_SATA
 
 	${SUDO} rm -f $PATH_TEMP_DIR/temp/* 
 fi
