@@ -53,15 +53,18 @@ fi
 
 ${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -t low
 
+echo "Start to turn off $INTERFACE. Please wait."
+
 while [  -e $DEV_AT_PATH  ];
 do
 #    echo "$INTERFACE module exists."
 #else
-    echo "module is still alive"
+    echo "module is still alive" > /dev/null 2>&1
     sleep 0.2
 	let COUNT+=1
 	if [ $COUNT -gt 150 ]
 	then
+	echo "$INTERFACE exceed the waiting time. Directly turn off the module power."
 		break
 	fi
 done

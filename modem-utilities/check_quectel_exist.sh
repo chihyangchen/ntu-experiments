@@ -35,11 +35,12 @@ FAIL_TRY=180
 
 GET_AT_PATH $INTERFACE
 
+echo "Start to check if $INTERFACE exists. Please wait."
 while [  -z $DEV_AT_PATH ] ||  [ ! -e $DEV_AT_PATH  ];
 do
 #    echo "$INTERFACE module exists."
 #else
-	echo "No related module"
+	echo "No related module" > /dev/null 2>&1
 	sleep $INTERVAL
 done
 
