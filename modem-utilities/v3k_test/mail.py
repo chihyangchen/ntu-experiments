@@ -30,6 +30,8 @@ if len(sys.argv) > 2:
         REASON = " SIM ERROR: "
     elif sys.argv[2] == "5":
         REASON = " Thermal alarm: "
+    elif sys.argv[2] == "6":
+        REASON = " Re-dial failed: "
     else:
         REASON = " Normal send: "
 
