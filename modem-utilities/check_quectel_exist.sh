@@ -57,9 +57,9 @@ do
 
 	if [ "$result" == "${isOK}" ]
 	then
-		echo "module AT port ready"
+		echo "$INTERFACE module AT port ready"
 	else
-		echo "module AT port not ready"
+		echo "$INTERFACE module AT port not ready"
 		let COUNT+=1
 		sleep $INTERVAL
 	fi

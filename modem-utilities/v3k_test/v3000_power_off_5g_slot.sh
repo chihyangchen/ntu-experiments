@@ -72,4 +72,5 @@ done
 
 ${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -r low
 ${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -p low
+echo "$INTERFACE is power down"
 
