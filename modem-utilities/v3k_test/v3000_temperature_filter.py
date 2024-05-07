@@ -7,7 +7,7 @@ import numpy
 target_module_1='m21'
 target_module_2='m22'
 
-target=["time","qfe_wtr_pa0","qfe_wtr_pa1","qfe_wtr_pa2","qfe_wtr_pa3"]
+target=["time","qfe_wtr_pa0","qfe_wtr_pa1","qfe_wtr_pa2","qfe_wtr_pa3","ipa-usr"] #"mdm-5g-usr"]
 target_nvme=["Sensor 1","Sensor 2","Sensor 3","Sensor 4"]
 target_core=["Core 0","Core 1","Core 2","Core 3"]
 target_sata=["drivetemp","temp1"]
@@ -16,11 +16,14 @@ l_qfe_wtr_pa0_1=[]
 l_qfe_wtr_pa1_1=[]
 l_qfe_wtr_pa2_1=[]
 l_qfe_wtr_pa3_1=[]
+l_mdm_5g_usr_1=[]
+
 
 l_qfe_wtr_pa0_2=[]
 l_qfe_wtr_pa1_2=[]
 l_qfe_wtr_pa2_2=[]
 l_qfe_wtr_pa3_2=[]
+l_mdm_5g_usr_2=[]
 
 l_sensor_nvme_1=[]
 l_sensor_nvme_2=[]
@@ -136,6 +139,12 @@ if __name__ == "__main__":
 				l_qfe_wtr_pa3_1.append(word[3])
 			elif module2_en:
 				l_qfe_wtr_pa3_2.append(word[3])
+		elif (len(word) > 2 and word[1] == target[5]):
+			if module1_en:
+				l_mdm_5g_usr_1.append(word[3])
+			elif module2_en:
+				l_mdm_5g_usr_2.append(word[3])
+#	print(l_mdm_5g_usr_1)
 #	print(l_qfe_wtr_pa0_2)
 #	print(l_qfe_wtr_pa1)
 #	print(l_qfe_wtr_pa2)
@@ -150,13 +159,18 @@ if __name__ == "__main__":
 #	print(l_sensor_nvme_3)
 #	print(l_sensor_nvme_4)
 
-#	print(l_sensor_sata_1)
+	print(l_sensor_sata_1)
+
+#	m_export.append(l_mdm_5g_usr_1)
+#	df = pd.DataFrame(numpy.transpose(m_export))
+#	df.to_csv('output.csv', index=False, header=False )
 
 	m_export.append(l_qfe_wtr_pa0_1)
 	m_export.append(l_qfe_wtr_pa1_1)
 	m_export.append(l_qfe_wtr_pa2_1)
 	m_export.append(l_qfe_wtr_pa3_1)
 	
+	m_export.append(l_mdm_5g_usr_2)
 	m_export.append(l_qfe_wtr_pa0_2)
 	m_export.append(l_qfe_wtr_pa1_2)
 	m_export.append(l_qfe_wtr_pa2_2)
@@ -173,10 +187,10 @@ if __name__ == "__main__":
 	m_export.append(l_sensor_nvme_4)
 	
 	m_export.append(l_sensor_sata_1)
-	print(m_export)
-
+#	print(m_export)
+"""
 	print("")
 	print(numpy.transpose(m_export))
 	df = pd.DataFrame(numpy.transpose(m_export))
 	df.to_csv('output.csv', index=False, header=False )
-
+"""
