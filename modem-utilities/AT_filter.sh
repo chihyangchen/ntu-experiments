@@ -18,7 +18,8 @@ function ATCMD_filter()
 	cmd=$1
 	index=$2
 
-	status=`(${SUDO} mxat -d $DEV_AT_PATH -c $cmd -t $AT_TIMEOUT)`
+	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c $cmd)`
+	#status=`(${SUDO} mxat -d $DEV_AT_PATH -c $cmd -t $AT_TIMEOUT)`
         for i in ${status[@]};
         do
                 sts+=($i)
