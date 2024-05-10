@@ -51,6 +51,12 @@ class FeatureExtracter(Analyzer):
             self.nr_ss_L = [] # (time, dict)
             self.rrc_L = [] # (time, dict)
         self.offline_test_dict = {k: [] for k in self.featuredict.keys()}
+        
+        self.cell_info = {'MN': None, 'earfcn': None, 'band': None,'SN': None}
+        self.earfcn_band_pair = {'525':'1', 
+                                 '1400': '3', '1750': '3', 
+                                 '3050': '7', '3400': '7', 
+                                 '3650': '8'}
 
     def set_source(self, source):
         """
@@ -79,7 +85,7 @@ class FeatureExtracter(Analyzer):
         if self.save_path:
             self.record_msg(msg)
             
-        self.offline_test(msg)
+        # self.offline_test(msg)
 
     # Unified function
     def record_msg(self, msg):
@@ -208,6 +214,9 @@ class FeatureExtracter(Analyzer):
         if msg.type_id == "LTE_RRC_OTA_Packet":
             msg_dict = dict(msg.data.decode())
             easy_dict = self.rrc_info_collector.catch_info(msg_dict)
+            self.cell_info['MN'] = easy_dict['PCI'][0]
+            self.cell_info['earfcn'] = easy_dict['Freq'][0]
+            self.cell_info['band'] = self.earfcn_band_pair[easy_dict['Freq'][0]]
             if self.mode == 'default':
                 self.rrc_info_collector.RRC_DICT = Rrc_Information_Collector.add_df(self.rrc_info_collector.RRC_DICT, easy_dict)
             elif self.mode == 'intensive':
