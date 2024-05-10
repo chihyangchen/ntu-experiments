@@ -1,4 +1,4 @@
-#!/usr/bin/python
+    #!/usr/bin/python
 # Filename: lte_measurement_analyzer.py
 
 """
@@ -13,12 +13,14 @@ from .utils.rrc_information import Rrc_Information_Collector
 
 from collections import namedtuple
 import copy
+import time 
+import datetime as dt
 
 class FeatureExtracter(Analyzer):
     """
     An self-defined analyzer
     """
-    def __init__(self, save_path=''):
+    def __init__(self, save_path='', mode='default'):
 
         Analyzer.__init__(self)
 
@@ -43,6 +45,11 @@ class FeatureExtracter(Analyzer):
         }
         self.features_buffer = copy.deepcopy(self.featuredict)
         
+        self.mode = mode
+        if self.mode == 'intensive':
+            self.lte_ss_L =[] # (time, dict)
+            self.nr_ss_L = [] # (time, dict)
+            self.rrc_L = [] # (time, dict)
         self.offline_test_dict = {k: [] for k in self.featuredict.keys()}
 
     def set_source(self, source):
@@ -72,7 +79,7 @@ class FeatureExtracter(Analyzer):
         if self.save_path:
             self.record_msg(msg)
             
-        # self.offline_test(msg)
+        self.offline_test(msg)
 
     # Unified function
     def record_msg(self, msg):
@@ -89,7 +96,26 @@ class FeatureExtracter(Analyzer):
         self.rrc_info_collector.reset()
         for key in self.featuredict:
             self.featuredict[key] = 0
+    
+    def reset_intensive_L(self):
+        if self.mode == 'intensive':
+            self.lte_ss_L =[] # (time, dict)
+            self.nr_ss_L = [] # (time, dict)
+            self.rrc_L = [] # (time, dict)
         
+    def gather_intensive_L(self):
+        for _, d in self.lte_ss_L:
+            self.lte_ss_collector.SS_DICT += d     
+        for _, d in self.nr_ss_L:
+            self.nr_ss_collector.SS_DICT += d
+        for _, d in self.rrc_L:
+            self.rrc_info_collector.RRC_DICT = Rrc_Information_Collector.add_df(self.rrc_info_collector.RRC_DICT, d)
+
+    def remove_intensive_L_by_time(self, time_limit):
+        self.lte_ss_L = [(t,d) for t,d in self.lte_ss_L if t > time_limit]
+        self.nr_ss_L = [(t,d) for t,d in self.nr_ss_L if t > time_limit]
+        self.rrc_L = [(t,d) for t,d in self.rrc_L if t > time_limit]
+    
     def get_featuredict(self):
         return self.featuredict
         
@@ -99,8 +125,11 @@ class FeatureExtracter(Analyzer):
             msg_dict = dict(msg.data.decode())
             easy_dict = LteSignalStrengthCollector.catch_msg(msg_dict)
             if easy_dict['Serving Cell Index'] =='PCell':
-                self.lte_ss_collector.SS_DICT += ss_dict(easy_dict)
-
+                if self.mode == 'default':
+                    self.lte_ss_collector.SS_DICT += ss_dict(easy_dict)
+                elif self.mode == 'intensive':
+                    self.lte_ss_L.append( (dt.datetime.now(), ss_dict(easy_dict)) )
+    
     def ss_dict_to_featuredict(self): 
 
         num_of_nei = len(self.lte_ss_collector.SS_DICT.dict) - 1
@@ -140,8 +169,10 @@ class FeatureExtracter(Analyzer):
         if msg.type_id == "5G_NR_ML1_Searcher_Measurement_Database_Update_Ext":
             msg_dict = dict(msg.data.decode())
             easy_dict = NrSignalStrengthCollector.catch_msg(msg_dict)
-            
-            self.nr_ss_collector.SS_DICT += nr_ss_dict(easy_dict)
+            if self.mode == 'default':
+                self.nr_ss_collector.SS_DICT += nr_ss_dict(easy_dict)
+            elif self.mode == 'intensive':
+                self.nr_ss_L.append( (dt.datetime.now(), nr_ss_dict(easy_dict)) )
 
     def nr_ss_dict_to_featuredict(self):
         # Get primary secondary serv cell rsrp, rsrq 
@@ -177,7 +208,10 @@ class FeatureExtracter(Analyzer):
         if msg.type_id == "LTE_RRC_OTA_Packet":
             msg_dict = dict(msg.data.decode())
             easy_dict = self.rrc_info_collector.catch_info(msg_dict)
-            self.rrc_info_collector.RRC_DICT = Rrc_Information_Collector.add_df(self.rrc_info_collector.RRC_DICT, easy_dict)
+            if self.mode == 'default':
+                self.rrc_info_collector.RRC_DICT = Rrc_Information_Collector.add_df(self.rrc_info_collector.RRC_DICT, easy_dict)
+            elif self.mode == 'intensive':
+                self.rrc_L.append( (dt.datetime.now(), easy_dict) )
 
     def rrc_dict_to_featuredict(self):
         HOs = Rrc_Information_Collector.parse_mi_ho(self.rrc_info_collector.RRC_DICT)
@@ -195,7 +229,6 @@ class FeatureExtracter(Analyzer):
         try: self.ts
         except: self.ts = ts
         if (ts - self.ts).total_seconds() > 1:
-            self.to_featuredict()
             for k, fea in self.featuredict.items():
                 self.offline_test_dict[k].append(fea)
             self.reset()

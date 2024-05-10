@@ -48,25 +48,31 @@ if __name__ == "__main__":
     
     # self defined analyzer
     # Set analyzer
-    featureextracter = FeatureExtracter()
-    featureextracter.set_source(src)
+    feature_extracter = FeatureExtracter(mode='intensive')
+    feature_extracter.set_source(src)
 
     # Use threading to start the monitoring
     def run_src(): src.run()
     t_src = threading.Thread(target=run_src, daemon=True)
     t_src.start()  
     
+    time_slot = 0.1
+    
     time.sleep(.5) # Clean time
-    featureextracter.reset()
+    feature_extracter.reset()
+    feature_extracter.reset_intensive_L()
     time.sleep(1) # buffer time 
     
     try:
-
         while True:
-            featureextracter.to_featuredict()
-            features = featureextracter.get_featuredict()
+            start_time = dt.datetime.now()
+            feature_extracter.gather_intensive_L()
+            feature_extracter.to_featuredict()
+            features = feature_extracter.get_featuredict()
             print(features)
-            featureextracter.reset()
-            time.sleep(1) 
-            
-    except: exit(0)
+            feature_extracter.remove_intensive_L_by_time(start_time - dt.timedelta(seconds=1-time_slot))
+            feature_extracter.reset()
+            time.sleep(time_slot)
+    except Exception as e: 
+        print(e)
+        exit(0)

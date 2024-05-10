@@ -8,7 +8,7 @@ import datetime as dt
 
 # Import MobileInsight modules
 from mobile_insight.monitor import OnlineMonitor
-from mobile_insight.analyzer import FeatureExtracter, TimeSyncAnalyzer
+from mobile_insight.analyzer import FeatureExtracter, MyMsgLogger
 
 from .predictor import Predictor
 
@@ -65,7 +65,7 @@ def class_far_close(preds1, preds2):
     return case1, prob1, case2, prob2
 
 # Online features collected and ML model inferring.
-def device_running(dev, ser, baudrate, time_seq, output_queue, start_sync_event, model_folder, SHOW_HO=False):
+def device_running(dev, ser, baudrate, time_seq, time_slot, output_queue, start_sync_event, model_folder, SHOW_HO=False):
     
     # Loading Model
     rlf_classifier = os.path.join(model_folder, 'rlf_cls_xgb.json')
@@ -76,69 +76,76 @@ def device_running(dev, ser, baudrate, time_seq, output_queue, start_sync_event,
     src.set_baudrate(baudrate)  # the baudrate of the port
     # Record time for save filename
     now = dt.datetime.today()
-    t = '-'.join([str(x) for x in[ now.year, now.month, f'{now.day}_{now.hour}', now.minute, now.second]])
+    t = [str(x) for x in [now.year, now.month, now.day, now.hour, now.minute, now.second]]
+    t = [x.zfill(2) for x in t]  # zero-padding to two digit
+    t = '-'.join(t[:3]) + '_' + '-'.join(t[3:])
+    
     save_path = os.path.join('/home/wmnlab/Data/mobileinsight', f"diag_log_{dev}_{t}.mi2log")
     src.save_log_as(save_path)
-    feature_extracter = FeatureExtracter()
-    feature_extracter.set_source(src)
     
-    save_path = f'/home/wmnlab/Data/TimeSync/TimeSync_{dev}_{t}.csv'
-    timesyncanalyzer = TimeSyncAnalyzer(save_path=save_path)
-    timesyncanalyzer.set_source(src)
+    dumper = MyMsgLogger()
+    dumper.set_source(src)
+    dumper.set_decoding(MyMsgLogger.XML) 
+    dumper.set_dump_type(MyMsgLogger.FILE_ONLY)
+    dumper.save_decoded_msg_as(f'/home/wmnlab/Data/XML/diag_log_{dev}_{t}.txt')
+    
+    feature_extracter = FeatureExtracter(mode='intensive')
+    feature_extracter.set_source(src)
 
     save_path = os.path.join('/home/wmnlab/Data/record', f"record_{dev}_{t}.csv")
     f_out = open(save_path, 'w')
-    f_out.write(','.join( selected_features + list(predictor.models.keys()) ) + '\n')
+    f_out.write(','.join( ['Timestamp'] + selected_features + list(predictor.models.keys()) ) + '\n')
    
     # declare nonlocal
-    count = 1
-    x_in = np.array([])
+    l = int(1/time_slot)
+    x_ins = [ [] for _ in range(l)]
     
     models_num = len(predictor.models)
     
-    def run_prediction():
+    def run_prediction(i):
         
-        nonlocal count, x_in
-
+        nonlocal x_ins
+        x_in = x_ins[i]
+        
+        start_time = dt.datetime.now()
+        feature_extracter.gather_intensive_L()
         feature_extracter.to_featuredict()
         features = get_array_features(feature_extracter)
-
-        if SHOW_HO:
+        if SHOW_HO and i == (l-1):
             show_HO(dev, feature_extracter)
-            
+        feature_extracter.remove_intensive_L_by_time(start_time - dt.timedelta(seconds=1-time_slot))
         feature_extracter.reset()
 
-        if count <= time_seq:
+        if len(x_in) != (time_seq-1):
             
-            if count == 1: x_in = features
-            else: x_in = np.concatenate((x_in, features), axis=0)
-
-            print(f'{dev} {time_seq-count} second after start...')
-
-            count += 1
+            x_in.append(features)
+            if i == (l-1):
+                print(f'{dev} {time_seq-len(x_in)} second after start...')
 
             # record
-            w = [str(e) for e in list(features)]
+            w = [start_time.strftime("%Y-%m-%d %H:%M:%S.%f")] + [str(e) for e in list(features)]
             try: f_out.write(','.join(w + [''] * models_num) + '\n') 
             except: pass
             
         else:
-            
-            x_in = np.concatenate((x_in[len(selected_features):], features), axis=0)
-            out = predictor.foward(x_in)    
-        
+            x_in.append(features)
+            f_in = np.concatenate(x_in).flatten()
+            out = predictor.foward(f_in)    
+            x_in = x_in[1:]
             # record
-            w = [str(e) for e in list(features) + list(out.values())]
+            w = [start_time.strftime("%Y-%m-%d %H:%M:%S.%f")]+[str(e) for e in list(features) + list(out.values())]
             try: f_out.write(','.join(w) + ',\n')
             except: pass
-            output_queue.put([dev, out])     
+            output_queue.put([dev, out, feature_extracter.cell_info])     
 
-        Timer(1, run_prediction).start()
+        x_ins[i] = x_in
+        i = (i+1) % l
+        Timer(time_slot, run_prediction, args=[i]).start()
     
     start_sync_event.wait()
     print(f'Start {dev}.')
     
-    thread = Timer(1, run_prediction)
+    thread = Timer(time_slot, run_prediction, args=[0])
     thread.daemon = True
     thread.start()
 

@@ -5,3 +5,9 @@ v4:
     use R1 as main 5G radio; use R2 as compensate radio.
     R1 maintain no band-locking 5G. R2 maintain LTE only band-locking.
     R1 dont change but R2 change while action.
+v5: 
+    R1: 5G ; R2: LTE
+    when ever detect an RLF action
+v6:
+    對照組： R1: 5G B1B8; R2: LTE
+    演算法： R1: 5G B1B3; R2: LTE B7B8
