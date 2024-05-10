@@ -312,21 +312,84 @@ def loss_excl_cause_dual(loss_lat_file_path1, loss_lat_file_path2, rrc_file_path
     print(f'dual loss rate: {len(LOSS_PKT_DUALs)/total_pkg_num}; dual excl rate: {len(EXCL_PKT_DUALs)/total_pkg_num}')
     return LOSS_PKT_DUALs, EXCL_PKT_DUALs
 
+
+
+# This function input the file path of the loss_latency csv and output the loss and excessive latency rate.
+def count_loss_excl_rate(file_path):
+
+    df = pd.read_csv (file_path)
+
+    # Total package in the experiment
+    total_pkg_num = len(df)
+
+    # Loss calculate
+    loss_cond = df['lost'] == True
+    try: loss_num = loss_cond.value_counts().loc[True]
+    except: loss_num = 0
+    loss_rate = loss_num/total_pkg_num
+
+    # Excexxive latency calculate
+    exc_lat = 0.1
+    excl_cond = df[loss_cond==False]['latency'] > exc_lat
+    try: excl_num = excl_cond.value_counts().loc[True]
+    except: excl_num = 0
+    excl_rate = excl_num/total_pkg_num
+
+    return loss_rate, excl_rate
+
+# This function input two file paths of the loss_latency csv and output the 
+# loss and excessive latency rate of dual radio condition.
+def count_loss_excl_rate_dual(file_path1, file_path2):
+
+    df1 = pd.read_csv(file_path1)
+    df2 = pd.read_csv(file_path2)
+
+    start_seq = df1['seq'].iloc[0] if df1['seq'].iloc[0] >=  df2['seq'].iloc[0] else df2['seq'].iloc[0]
+    end_seq = df1['seq'].iloc[-1] if df1['seq'].iloc[-1] <=  df2['seq'].iloc[-1] else df2['seq'].iloc[-1]
+    total_pkg_num = end_seq - start_seq + 1
+
+    cond1 = (df1['seq'] >= start_seq) & (df1['seq'] <= end_seq)
+    df1 = df1[cond1]
+    df1 = df1.reset_index(drop=True)
+    cond2 = (df2['seq'] >= start_seq) & (df2['seq'] <= end_seq)
+    df2 = df2[cond2]
+    df2 = df2.reset_index(drop=True)
+
+    # Loss calculate for dual radios redundant packets.
+    loss_cond = (df1['lost'] == True) & (df2['lost'] == True)
+    try: loss_num = loss_cond.value_counts().loc[True]
+    except: loss_num = 0
+    loss_rate = loss_num/total_pkg_num
+
+    # Excexxive latency calculate for dual radios redundant packets.
+    exc_lat = 0.1   
+    excl_cond1 = df1[(loss_cond==False)]['latency'] > exc_lat
+    excl_cond2 = df2[(loss_cond==False)]['latency'] > exc_lat
+    excl_cond = (excl_cond1 == True) & (excl_cond2 == True)
+    try: excl_num = excl_cond.value_counts().loc[True]
+    except: excl_num = 0
+    excl_rate = excl_num/total_pkg_num
+
+    return loss_rate, excl_rate
+
+
 PKG = namedtuple('PKG',['Timestamp','seq','latency'],defaults=[None,0,np.nan])
-def accumulate_packet(file,time_range):
+def accumulate_packet(file,time_range=None):
 
     L = []
     df = pd.read_csv(file)
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 
     hys = dt.timedelta(seconds=0.2)
-    start_time = time_range[0] - hys
-    end_time = time_range[1] + hys
+    if time_range:
+        start_time = time_range[0] - hys
+        end_time = time_range[1] + hys
 
     for i in range(len(df)):
         
         t = df['Timestamp'].iloc[i]
-        if t < start_time: continue
+        if time_range is None: pass
+        elif t < start_time: continue
         elif start_time <= t < end_time: pass
         elif end_time <= t: break
 

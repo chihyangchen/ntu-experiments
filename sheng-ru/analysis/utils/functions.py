@@ -4,14 +4,12 @@ import re
 from .signal_strength import SS
 from .pkg_loss_excl import PKG
 
+
 def find_longest_common_substring_length(str1, str2):
     len1 = len(str1)
     len2 = len(str2)
-
     dp = [[0] * (len2 + 1) for _ in range(len1 + 1)]
-
     max_length = 0  
-
     for i in range(1, len1 + 1):
         for j in range(1, len2 + 1):
             if str1[i - 1] == str2[j - 1]:
@@ -43,7 +41,7 @@ def add_nan_pkg(pkgs, add=dt.timedelta(seconds=0.1)):
     return L
 
 # Useful Functions
-def get_info(ordered_HOs, time_range):
+def get_info(ordered_HOs, time_range=None):
 
     T, Type, Trans, Ev = [], [], [], []
     for element in ordered_HOs:
@@ -54,9 +52,9 @@ def get_info(ordered_HOs, time_range):
             type, ho = element[0], element[1]
             NO_MR = True
 
-        if ho.start < time_range[0]:
+        if time_range is not None and ho.start < time_range[0]:
             continue
-        elif time_range[1] < ho.start:
+        elif time_range is not None and time_range[1] < ho.start:
             break
         else: # in time range
             type = type.replace("_", " ")
