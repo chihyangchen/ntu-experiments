@@ -22,7 +22,22 @@ then
     echo "missing argument"
     helpFunction
 fi
-
+if [ "$DEV" == "1" ]
+then
+	GMAIL_PASS="niug---zcur---aqns---ndnl"
+elif [ "$DEV" == "2" ]
+then
+	GMAIL_PASS="zwon---tdpy---gfhz---ndoc"
+elif [ "$DEV" == "3" ]
+then
+	GMAIL_PASS="vbpu---vwcx---ynrw---iqch"
+elif [ "$DEV" == "4" ]
+then
+	GMAIL_PASS="mjcr---xxtt---scuq---ljuv"
+fi
+to_be_replaced_pass="xxxx"
+sed -i 's#'${to_be_replaced_pass}'#'${GMAIL_PASS}'#g' mail.py
+sed -i 's/---/ /g' mail.py
 
 v3k_test_dir=`(pwd)`
 echo "$v3k_test_dir"
@@ -60,3 +75,10 @@ ${SUDO} cp v3000_TMetro.sh /usr/local/bin
 ${SUDO} cp v3000_TMetro.service /etc/systemd/system
 ${SUDO} systemctl enable v3000_TMetro.service
 
+${SUDO} cp KEEP-re-dial.sh /usr/local/bin
+#uncomment when ready to deploy
+#
+#${SUDO} cp v3000_TMetro_keepalive_1.service /etc/systemd/system
+#${SUDO} cp v3000_TMetro_keepalive_2.service /etc/systemd/system
+#${SUDO} systemctl enable v3000_TMetro_keepalive_1.service
+#${SUDO} systemctl enable v3000_TMetro_keepalive_2.service

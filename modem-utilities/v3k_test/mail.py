@@ -9,7 +9,7 @@ import sys
 # REASON: 0: Regular report, 1: Loss connection, 2: SIM error, 3. GPIO toggling, 4: Thermal too High 
 
 gmail_user = "chihyangchen0@gmail.com"
-gmail_app_password = "xxxxxxxxxxxxxxxxxxxxx"
+gmail_app_password = "xxxx"
 
 sender = 'chihyangchen0@gmail.com'
 receivers = ['chihyang78@gmail.com']
