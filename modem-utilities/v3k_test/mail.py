@@ -60,7 +60,7 @@ if len(sys.argv) > 3:
 
 
 try:
-	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+	server = smtplib.SMTP_SSL('smtp.gmail.com', 465,timeout=10)
 
 	server.login(gmail_user, gmail_app_password)
 	server.send_message(email)
