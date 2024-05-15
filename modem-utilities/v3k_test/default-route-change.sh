@@ -9,7 +9,7 @@ ETH_GW="172.30.30.25"
 #ETH_GW=""
 
 function PING_DEV() {
-	ping 8.8.8.8 -c 1 -W 1 -I $1
+	ping 8.8.8.8 -c 1 -W 2 -I $1
 }
 
 INTERVAL_PING=2	# interval of ping (second)
