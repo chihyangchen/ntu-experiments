@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SUDO=sudo
-
+mail_receiver="'chihyang78@gmail.com','youngcy_chen@moxa.com'"
 
 helpFunction()
 {
@@ -38,6 +38,10 @@ fi
 to_be_replaced_pass="xxxx"
 sed -i 's#'${to_be_replaced_pass}'#'${GMAIL_PASS}'#g' mail.py
 sed -i 's/---/ /g' mail.py
+
+to_be_replaced_receiver="who"
+sed -i 's#'${to_be_replaced_receiver}'#'${mail_receiver}'#g' mail.py
+
 
 v3k_test_dir=`(pwd)`
 echo "$v3k_test_dir"
