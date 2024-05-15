@@ -42,8 +42,15 @@ do
 #else
 	echo "No related module" > /dev/null 2>&1
 	sleep $INTERVAL
+	let COUNT+=1
+	if [ $COUNT -gt $FAIL_TRY ]
+	then
+		echo "Module may be failed: $INTERFACE"
+		exit 1
+	fi
 done
 
+COUNT=0
 while [ "$result" != "${isOK}" ]
 do
 	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c AT -t 5000)`
