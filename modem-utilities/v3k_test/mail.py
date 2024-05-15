@@ -12,7 +12,8 @@ gmail_user = "chihyangchen0@gmail.com"
 gmail_app_password = "xxxx"
 
 sender = 'chihyangchen0@gmail.com'
-receivers = ['chihyang78@gmail.com']
+#receivers = ['chihyang78@gmail.com']
+receivers = [who]
 
 REASON = ""
 DEV = ""
