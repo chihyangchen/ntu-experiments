@@ -35,6 +35,7 @@ elif [ "$DEV" == "4" ]
 then
 	GMAIL_PASS="mjcr---xxtt---scuq---ljuv"
 fi
+cp mail.py.sample mail.py
 to_be_replaced_pass="xxxx"
 sed -i 's#'${to_be_replaced_pass}'#'${GMAIL_PASS}'#g' mail.py
 sed -i 's/---/ /g' mail.py
