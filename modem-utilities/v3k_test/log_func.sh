@@ -85,9 +85,11 @@ function operation_system_log() {
 # Modem 1 temperature
 	echo "device,$INTERFACE_1"
 	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE_1 -c at+qtemp
+	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE_1 -c at+qeng=\"servingcell\"
 # Modem 2 termperature
 	echo "device,$INTERFACE_2"
 	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE_2 -c at+qtemp
+	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE_2 -c at+qeng=\"servingcell\"
 
 }
 function system_log() {
