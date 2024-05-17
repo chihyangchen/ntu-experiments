@@ -19,22 +19,24 @@ REASON = ""
 DEV = ""
 
 if len(sys.argv) > 1:
-    DEV = sys.argv[1]
+	DEV = sys.argv[1]
 if len(sys.argv) > 2:
-    if sys.argv[2] == "1":
-        REASON = " Loss connection: "
-    elif sys.argv[2] == "2":
-        REASON = " Flight Mode Toggling: "
-    elif sys.argv[2] == "3":
-        REASON = " Pwr GPIO Toggling: "
-    elif sys.argv[2] == "4":
-        REASON = " SIM ERROR: "
-    elif sys.argv[2] == "5":
-        REASON = " Thermal alarm: "
-    elif sys.argv[2] == "6":
-        REASON = " Re-dial failed: "
-    else:
-        REASON = " Normal send: "
+	if sys.argv[2] == "1":
+		REASON = " Loss connection: "
+	elif sys.argv[2] == "2":
+		REASON = " Flight Mode Toggling: "
+	elif sys.argv[2] == "3":
+		REASON = " Pwr GPIO Toggling: "
+	elif sys.argv[2] == "4":
+		REASON = " SIM ERROR: "
+	elif sys.argv[2] == "5":
+		REASON = " Thermal alarm: "
+	elif sys.argv[2] == "6":
+		REASON = " Re-dial failed: "
+	elif sys.argv[2] == "7":
+		REASON = " AT+CFUN=1,1 failed: "
+	else:
+		REASON = " Normal send: "
 
 
 email = EmailMessage()
@@ -55,7 +57,7 @@ email.set_content(body)
 
 
 if len(sys.argv) > 3:
-    file_in = sys.argv[3]
+	file_in = sys.argv[3]
 	with open(file_in, 'rb') as file:
 		email.add_attachment(file.read(), maintype='text', subtype='plain', filename=file_in)
 
