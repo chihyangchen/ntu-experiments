@@ -38,8 +38,10 @@ mailhandle()
 		error_content="SIM error"
 	elif [ "$1" == "5" ]; then
 		error_content="Thermal alarm"
-	else
+	elif [ "$1" == '6' ]; then
 		error_content="Re-dial fail"
+	else
+		error_content="Reset fail"
 	fi
 
 	echo "[LOG]"
@@ -114,7 +116,8 @@ while true; do
 		
 			if [ "$toggle_status" == "0" ]; then
 				echo "[re-dial]: toggle flight mode success"
-				echo "[re-dial]: waiting for flight mode on..."
+                                echo "[re-dial]: waiting for flight mode on..."
+
 				((flight_mode_counter=0))
 				break
 			else
@@ -145,6 +148,7 @@ while true; do
 				else
 					echo "[re-dial]: reset mode failed"
 					((reset_counter++))
+					mailhandle "7" "0" # reset error but add log only
 				fi
 			done
 		fi
@@ -152,6 +156,7 @@ while true; do
 
 		#------------------toggle GPIO------------------------
 		if [ $reset_counter -ge 2 ]; then
+			mailhandle "7" "1" # reset error alarm
 			echo "[re-dial]: start reading CPU temperature"
 			$PATH_UTILS/v3k_test/check_temperature.sh
 			CPU_temperature_status=$?
@@ -179,17 +184,18 @@ while true; do
 
 		#-------SIM check------------------
 		echo "[re-dial]: start SIM check"
-		ATCMD_filter "at+cfun?" "4"
+		ATCMD_filter "at+cpin?" "4"
 		SIMcheck_status=$?
 
 		if [ "$SIMcheck_status" != "0" ]; then
 			((SIM_check_counter++))
+			((flight_mode_counter=0))
 			mailhandle "4" "0" # SIM check alarm but add log only
 		
 			if [ $SIM_check_counter -gt 2 ]; then
 				mailhandle "4" "1" # SIM check alarm
-	    		exit 1
-    		fi
+	    			exit 1
+			fi
 		else
 			#--------------dial---------------
 			echo "[re-dial]: start dialing"      	
