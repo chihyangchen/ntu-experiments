@@ -84,6 +84,7 @@ function ROUTE_CHANGE() {   # 1 -> 2
 	if  [[ $(ip route | grep default | head -1 | grep $TO_INTERFACE) ]]
 	then
 		echo "TARGET is the FIRST Default, No need to CHANGE"
+		echo "[ROUTE CHANGE]: Finished"	
 		return 0
 	elif ! [[ $(ip route | grep default | grep $TO_INTERFACE) ]]
 	then		
@@ -93,7 +94,8 @@ function ROUTE_CHANGE() {   # 1 -> 2
 	${SUDO} ip route del default dev $FROM_INTERFACE
 	sleep 0.1
 	${SUDO} ip route append default via $LC_GW_FROM	# add to the last
-	echo " From $FROM_INTERFACE to $TO_INTERFACE"	
+	echo " From $FROM_INTERFACE to $TO_INTERFACE"
+	echo "[ROUTE CHANGE]: Finished"	
 }
 
 function DNS_CHANGE() {
