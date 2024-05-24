@@ -4,11 +4,12 @@ import pandas as pd
 from collections import namedtuple
 
 SS = namedtuple('SS', ['PCI', 'earfcn', 'RSRP', 'RSRQ', 'Timestamp'], defaults=['','',0,0,None])
-def LTE_signal_strength(ml1_file, time_range, cut=True):
+def LTE_signal_strength(ml1_file, time_range, cut=True, TZ=False):
     # Read csv with pandas
     ml1_df = pd.read_csv(ml1_file)
     ml1_df['Timestamp'] = pd.to_datetime(ml1_df['Timestamp'])
-    ml1_df['Timestamp'] = ml1_df['Timestamp'] + pd.Timedelta(hours=8)
+    if TZ:
+        ml1_df['Timestamp'] = ml1_df['Timestamp'] + pd.Timedelta(hours=8)
     ml1_df = ml1_df.astype({'PCI': str, 'EARFCN': str})
 
     # Read ml1 csv data
@@ -53,7 +54,10 @@ def LTE_signal_strength(ml1_file, time_range, cut=True):
         # Cells
         num_neicells = ml1_df['Number of Neighbor Cells'].iloc[i]
         
-        for j in np.arange(9, 9+num_neicells*3,3):
+        try: index = ml1_df.columns.get_loc('PCI1')
+        except KeyError: continue
+
+        for j in np.arange(index, index+num_neicells*3,3):
             pci = str(int(ml1_df.iloc[i][j]))
             rsrp = ml1_df.iloc[i][j+1]
             rsrq = ml1_df.iloc[i][j+2]
@@ -67,22 +71,23 @@ def LTE_signal_strength(ml1_file, time_range, cut=True):
     
     return PCell, SCell1, SCell2, SCell3, Cells
 
-def NR_signal_strength(ml1_file, time_range):
+def NR_signal_strength(ml1_file, time_range, TZ=False):
     # Read csv with pandas
     ml1_df = pd.read_csv(ml1_file)
-    ml1_df['Timestamp'] = pd.to_datetime(ml1_df['Timestamp'])
-    ml1_df['Timestamp'] = ml1_df['Timestamp'] + pd.Timedelta(hours=8)
-    ml1_df = ml1_df.astype({'Serving Cell PCI': str, 'Raster ARFCN': str})
-
     Cells = {}
     PSCell = []
+    if len(ml1_df) == 0:
+        return PSCell, Cells
+    ml1_df['Timestamp'] = pd.to_datetime(ml1_df['Timestamp'])
+    if TZ:
+        ml1_df['Timestamp'] = ml1_df['Timestamp'] + pd.Timedelta(hours=8)
+    ml1_df = ml1_df.astype({'Serving Cell PCI': str, 'Raster ARFCN': str})
     
     hys = dt.timedelta(seconds=5)
     start_time = time_range[0] - hys
     end_time = time_range[1] + hys
 
     for i in range(len(ml1_df)):
-
         t = ml1_df['Timestamp'].iloc[i]
         if t < start_time: continue
         elif start_time <= t < end_time: pass
@@ -91,8 +96,11 @@ def NR_signal_strength(ml1_file, time_range):
         PSCell_pci = ml1_df['Serving Cell PCI'].iloc[i]
         earfcn = ml1_df['Raster ARFCN'].iloc[i]
 
+        try: index = ml1_df.columns.get_loc('PCI0')
+        except KeyError: continue
+
         # Deal with Cells first        
-        for j in np.arange(6, len(ml1_df.columns),3):
+        for j in np.arange(index, len(ml1_df.columns),3):
             if np.isnan(ml1_df.iloc[i][j]):
                 break
             pci = str(int(ml1_df.iloc[i][j]))

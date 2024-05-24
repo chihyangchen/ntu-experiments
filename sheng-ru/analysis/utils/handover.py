@@ -5,10 +5,13 @@ import numpy as np
 from collections import namedtuple
 
 HO = namedtuple('HO',['start', 'end', 'others', 'trans'], defaults=[None,None,'',''])
-def parse_mi_ho(f):
+def parse_mi_ho(f, TZ=False):
 
     df = pd.read_csv(f)
-    df["Timestamp"] = df["Timestamp"].swifter.apply(lambda x: pd.to_datetime(x) + dt.timedelta(hours=8)) 
+    if TZ:
+        df["Timestamp"] = df["Timestamp"].swifter.apply(lambda x: pd.to_datetime(x) + dt.timedelta(hours=8)) 
+    else:
+        df["Timestamp"] = df["Timestamp"].swifter.apply(lambda x: pd.to_datetime(x)) 
     nr_pci = 'O'
     scells = []
 

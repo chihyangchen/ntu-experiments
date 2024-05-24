@@ -8,7 +8,7 @@ Offline analysis by replaying logs
 # Import MobileInsight modules
 from mobile_insight.monitor import OfflineReplayer
 from mobile_insight.analyzer import MsgLogger, LteRrcAnalyzer, WcdmaRrcAnalyzer, LteNasAnalyzer, UmtsNasAnalyzer, LtePhyAnalyzer, LteMacAnalyzer, NrRrcAnalyzer, LteMeasurementAnalyzer 
-from mobile_insight.analyzer import MyAnalyzer
+from .analyzer.rlf_predictor import RlfPredictor
 
 def analysis(path):
     
@@ -17,16 +17,19 @@ def analysis(path):
     src = OfflineReplayer()
     src.set_input_path(path)
 
-    logger = MsgLogger()
-    logger.set_decode_format(MsgLogger.XML)
-    logger.set_dump_type(MsgLogger.FILE_ONLY)
-    logger.save_decoded_msg_as(path+".txt")
-    logger.set_source(src)
+    # logger = MsgLogger()
+    # logger.set_decode_format(MsgLogger.XML)
+    # logger.set_dump_type(MsgLogger.FILE_ONLY)
+    # logger.save_decoded_msg_as(path+".txt")
+    # logger.set_source(src)
     
     # Analyzers
     # lte_rrc_analyzer = LteRrcAnalyzer()
     # lte_rrc_analyzer.set_source(src)  # bind with the monitor
 
+    rlf_predictor = RlfPredictor()
+    rlf_predictor.set_source(src)
+    
     # Start the monitoring
     src.run()
 
