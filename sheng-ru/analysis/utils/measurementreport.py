@@ -3,7 +3,6 @@ import datetime as dt
 import copy
 from collections import namedtuple
 
-
 class REPORTCONFIG:
     def __init__(self, name, parameter):
         self.name = name.split(' ')[0]  

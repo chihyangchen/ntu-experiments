@@ -3,6 +3,7 @@ import swifter
 import datetime as dt
 import numpy as np
 from collections import namedtuple
+from .measurementreport import *
 
 HO = namedtuple('HO',['start', 'end', 'others', 'trans'], defaults=[None,None,'',''])
 def parse_mi_ho(f, TZ=False):
@@ -432,3 +433,11 @@ def print_trans(HOs, p=True, mappings=None):
                 print(f'{ho[1].start} | {bcolors.OKBLUE}{ho[0]}{bcolors.ENDC} | {bcolors.OKCYAN}{ho[1].trans}{bcolors.ENDC}')
 
     return All_HOs
+
+def to_ordered_HO(rrc_file):
+    HOs = parse_mi_ho(rrc_file)
+    MRs = MeasureReport(rrc_file)
+    MRs = correct_MR_with_HO(MRs, HOs)
+    mappings = map_MR_HO(MRs, HOs)
+    ordered_HOs = print_trans(HOs, mappings=mappings, p=False)
+    return ordered_HOs

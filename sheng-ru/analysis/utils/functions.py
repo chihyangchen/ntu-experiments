@@ -95,3 +95,46 @@ def get_pci(string, type):
             return f'O\u2192{match.group(1)}'
 
     return None
+
+# Analyse every case.
+REs = {'LTE_HO': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\) \| O', 
+       'MN_HO': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\) \| (\d+)', 
+       'MN_HO_to_eNB': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\) \| (\d+) -> O',
+       'SN_setup': r'\((\d+), (\d+)\) \| O -> (\d+)', 
+       'SN_Rel': r'\((\d+), (\d+)\) \| (\d+) -> O', 
+       'SN_HO': r'\((\d+), (\d+)\) \| (\d+) -> (\d+)',
+       'RLF_II': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\) \| (\d+) -> O', 
+       'RLF_III': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\) \| (\d+) -> O',
+       'SCG_RLF': r'\((\d+), (\d+)\) \| (\d+) -> O',
+       'Conn_Req': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\)'}
+REs_easy = {
+    'LTE_HO': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\)', 
+    'MN_HO': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\)', 
+    'MN_HO_to_eNB': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\)', 
+    'RLF_II': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\)', 
+    'RLF_III': r'\((\d+), (\d+)\) -> \((\d+), (\d+)\)',
+}
+def get_pci_from_HO_type(string, type):
+    pattern = REs[type]
+    match = re.match(pattern, string)
+
+    if match:
+        if type in ['LTE_HO', 'MN_HO', 'MN_HO_to_eNB','RLF_II','RLF_III', 'Conn_Req']:
+            return f'{match.group(1)}'
+        elif type == 'SN_setup':
+            return f'{match.group(3)}'
+        elif type == 'SN_Rel':
+            return f'{match.group(3)}'
+        elif type == 'SN_HO':
+            return f'{match.group(3)}'
+        elif type == 'SCG_RLF':
+            return f'{match.group(3)}'
+    else:
+        if type in REs_easy.keys():
+            pattern = REs_easy[type]
+            match = re.match(pattern, string)
+            if match:
+                if type in ['RLF_II','RLF_III']:
+                    return f'{match.group(1)}'
+    print('Error Input:', string, type)
+    raise

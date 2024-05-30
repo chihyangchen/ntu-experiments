@@ -166,9 +166,9 @@ def loss_excl_cause_dual(loss_lat_file_path1, loss_lat_file_path2, rrc_file_path
     events = ['LTE_HO', 'MN_HO', 'MN_HO_to_eNB', 'SN_setup', 
               'SN_Rel', 'SN_HO', 'RLF_II', 'RLF_III', 'SCG_RLF',
               'Conn_Req']
-    slots = [dt.timedelta(seconds=1), dt.timedelta(seconds=1), dt.timedelta(seconds=1), dt.timedelta(seconds=1),
-             dt.timedelta(seconds=1), dt.timedelta(seconds=1), dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=2),
-             dt.timedelta(seconds=1)]
+    slots = [dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=1),
+             dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=4), dt.timedelta(seconds=4), dt.timedelta(seconds=4),
+             dt.timedelta(seconds=3)]
 
     LOSS_PKT_DUALs = []
 
@@ -240,9 +240,9 @@ def loss_excl_cause_dual(loss_lat_file_path1, loss_lat_file_path2, rrc_file_path
     events = ['LTE_HO', 'MN_HO', 'MN_HO_to_eNB', 'SN_setup', 
               'SN_Rel', 'SN_HO', 'RLF_II', 'RLF_III', 'SCG_RLF',
               'Conn_Req']
-    slots = [dt.timedelta(seconds=1), dt.timedelta(seconds=1), dt.timedelta(seconds=1), dt.timedelta(seconds=1),
-             dt.timedelta(seconds=1), dt.timedelta(seconds=1), dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=2),
-             dt.timedelta(seconds=1)]
+    slots = [dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=2),
+             dt.timedelta(seconds=2), dt.timedelta(seconds=2), dt.timedelta(seconds=4), dt.timedelta(seconds=4), dt.timedelta(seconds=4),
+             dt.timedelta(seconds=3)]
     
     
     EXCL_PKT_DUALs = []
@@ -312,8 +312,6 @@ def loss_excl_cause_dual(loss_lat_file_path1, loss_lat_file_path2, rrc_file_path
     print(f'dual loss rate: {len(LOSS_PKT_DUALs)/total_pkg_num}; dual excl rate: {len(EXCL_PKT_DUALs)/total_pkg_num}')
     return LOSS_PKT_DUALs, EXCL_PKT_DUALs
 
-
-
 # This function input the file path of the loss_latency csv and output the loss and excessive latency rate.
 def count_loss_excl_rate(file_path):
 
@@ -371,7 +369,6 @@ def count_loss_excl_rate_dual(file_path1, file_path2):
     excl_rate = excl_num/total_pkg_num
 
     return loss_rate, excl_rate
-
 
 PKG = namedtuple('PKG',['Timestamp','seq','latency'],defaults=[None,0,np.nan])
 def accumulate_packet(file,time_range=None):
