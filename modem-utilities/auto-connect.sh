@@ -10,11 +10,12 @@ helpFunction()
     exit 1 # Exit script after printing help
 }
 
-while getopts "i:d" opt
+while getopts "i:dc" opt
 do
     case "$opt" in
         i ) INTERFACE="$OPTARG" ;;
         d ) DWG="0.0.0.0" ;;
+        c ) CHECK="do_check" ;;
         ? ) helpFunction ;;
     esac
 done
@@ -31,7 +32,6 @@ sts=()
 CHECK_INTERVAL=6
 VAL_TO_CFUN=9
 TIMEOUT=0
-
 function SIM_CHECK() {
 	sts=()
 	status=`(${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE -c at+cpin?)`
@@ -92,9 +92,19 @@ do
 		### COMMAND to do the dial
 		if [ "$DWG" != "" ]
 		then
-			$PATH_UTILS/dial-qmi.sh -i $INTERFACE -d
+			if [ "$CHECK" == "do_check" ]
+			then
+				$PATH_UTILS/dial-qmi.sh -i $INTERFACE -d -c
+			else
+				$PATH_UTILS/dial-qmi.sh -i $INTERFACE -d
+			fi
 		else
-			$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+			if [ "$CHECK" == "do_check" ]
+			then
+				$PATH_UTILS/dial-qmi.sh -i $INTERFACE -c
+			else
+				$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+			fi
 		fi
 		exit 0
 	fi

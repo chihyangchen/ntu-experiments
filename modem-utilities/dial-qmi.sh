@@ -131,7 +131,12 @@ then
 	if [ $? != 0 ]; 
 	then
 		$PATH_UTILS/disconnect-qmi.sh -i $INTERFACE
-		$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+		if [ "$DGW" != "" ]
+		then
+			$PATH_UTILS/dial-qmi.sh -i $INTERFACE -d
+		else
+			$PATH_UTILS/dial-qmi.sh -i $INTERFACE
+		fi
 	fi
 fi
 
