@@ -92,7 +92,7 @@ fi
 #--------------ping loop start-----------------
 while true; do
     
-	ping -W 1 -I $INTERFACE -c 1 8.8.8.8 > /dev/null
+	ping -W 2 -I $INTERFACE -c 1 8.8.8.8 > /dev/null
 
 	if [ $? -eq 0 ]; then
 		echo "[re-dial]: Ping successful - $(date)"
@@ -103,8 +103,8 @@ while true; do
 		mailhandle "1" "0" # loss connection but add log only
 	fi
 
-    # ping out per 10s, ping fail > 30s, parameter can be modify
-	if [ $ping_fail_counter -ge 2 ]; then
+    # ping out per 30s, ping fail > 3min, parameter can be modify
+	if [ $ping_fail_counter -ge 6 ]; then
 		ping_fail_counter=0
 		echo "[re-dial]: Network failure"
 		mailhandle "1" "1" # loss connection alarm
@@ -199,7 +199,7 @@ while true; do
 		else
 			#--------------dial---------------
 			echo "[re-dial]: start dialing"      	
-			$PATH_UTILS/auto-connect-test.sh -i $INTERFACE
+			$PATH_UTILS/auto-connect.sh -i $INTERFACE
 			if [ "$?" == "0" ]; then
 				ping_fail_counter=0
 				flight_mode_counter=0
@@ -215,5 +215,5 @@ while true; do
 	fi
 
 	# pin out per 10s
-	sleep 10
+	sleep 30
 done

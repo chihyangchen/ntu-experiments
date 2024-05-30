@@ -4,6 +4,7 @@
 
 source PATH_for_NTU_exp
 TOP=$PATH_TEMP_DIR
+SUDO=sudo
 
 INTERFACE_1=""
 INTERFACE_2=""
@@ -69,7 +70,7 @@ fi
 #-----------end of check argument-------------
 
 while true; do
-	$PATH_UTILS/re-dial.sh -i $INTERFACE
+	${SUDO}	$PATH_UTILS/re-dial.sh -i $INTERFACE
 
 	if [ "$?" == "1" ]; then
 		echo "[KEEP re-dial]: restart re-dial script after 1min"
