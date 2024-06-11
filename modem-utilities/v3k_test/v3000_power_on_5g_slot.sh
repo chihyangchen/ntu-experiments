@@ -40,6 +40,9 @@ GET_GPIO_SLOT $INTERFACE
 
 ${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -p high
 sleep 0.05
+# use the SIM of side B
+${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -i 2
+sleep 0.05
 ${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -t high
 ${SUDO} ${PATH_UTILS}/${V3K_USE}/mx-m2b-module-ctl -s ${SLOT} -r high
 
