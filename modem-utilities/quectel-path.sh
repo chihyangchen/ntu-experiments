@@ -19,10 +19,10 @@ case "$1" in
         DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if03-port0"
         ;;
     m11)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if03-port0"
+        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_2559aeac-if03-port0"
         ;;
     m12)
-        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if03-port0"
+        DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if03-port0"
         ;;
     m21)
         DEV_AT_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if03-port0"
