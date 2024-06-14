@@ -1,0 +1,11 @@
+[Unit]
+Description=V3000 M.2 power control service unit and auto connection.
+After=v3000_TMetro.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/bin/KEEP-re-dial.sh -n 
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target
