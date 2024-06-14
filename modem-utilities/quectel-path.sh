@@ -67,10 +67,10 @@ case "$1" in
         DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_32b2bdb2-if00-port0"
         ;;
     m11)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_2559aeac-if00-port0"
         ;;
     m12)
-        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if00-port0"
+        DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if00-port0"
         ;;
     m21)
         DEV_DM_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if00-port0"
@@ -132,10 +132,10 @@ case "$1" in
 function GET_GPS_PATH {
 case "$1" in
     m11)
-        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_345022ef-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_2559aeac-if01-port0"
         ;;
     m12)
-        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_b51fc56d-if01-port0"
+        DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_7444b2b7-if01-port0"
         ;;
     m21)
         DEV_GPS_PATH="/dev/serial/by-id/usb-Quectel_RM500Q-GL_98295205-if01-port0"
