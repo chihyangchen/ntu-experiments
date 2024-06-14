@@ -206,7 +206,8 @@ while true; do
 				reset_counter=0
 				SIM_check_counter=0
 				### Restart the VPN process
-				${SUDO} systemctl restart zerotier-one.service
+				# Move to the default route change script
+				#${SUDO} systemctl restart zerotier-one.service
 			else
 				mailhandle "6" "1" # re-dial fail alarm
 				exit 1

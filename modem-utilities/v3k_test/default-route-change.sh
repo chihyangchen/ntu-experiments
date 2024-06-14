@@ -95,7 +95,9 @@ function ROUTE_CHANGE() {   # 1 -> 2
 	sleep 0.1
 	${SUDO} ip route append default via $LC_GW_FROM	# add to the last
 	echo " From $FROM_INTERFACE to $TO_INTERFACE"
-	echo "[ROUTE CHANGE]: Finished"	
+	echo "[ROUTE CHANGE]: Finished"
+	echo "Restart the VPN process"
+	${SUDO} systemctl restart zerotier-one.service
 }
 
 function DNS_CHANGE() {
