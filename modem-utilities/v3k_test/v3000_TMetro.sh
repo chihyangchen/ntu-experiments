@@ -64,7 +64,8 @@ then
 	wait
 	# slot 2 connect
 	${SUDO} $PATH_UTILS/auto-connect.sh -i $INTERFACE_2
-
+	# Restart the VPN Process
+	${SUDO} systemctl restart zerotier-one.service
 	#SYSTEM GPS enable
 	#Enable GPS port to gpsd
 	${SUDO} $PATH_UTILS/qc-at.sh -i $INTERFACE_1 -c at+qgps=1 
